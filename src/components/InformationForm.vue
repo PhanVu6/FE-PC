@@ -5,28 +5,21 @@
     </section>
 
     <section class="block">
-      <el-form :model="form" label-width="auto" style="max-width: 600px; margin-top: 30px">
-        <el-form-item prop="name" label="Product name" :rules="[
-          {
-            required: true,
-            message: 'Please input product name',
-            trigger: 'blur',
-          }
-            ]">
-          <el-input v-model="form.name" @change="validateName" clearable/>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="auto" style="max-width: 600px; margin-top: 30px">
+        <el-form-item prop="name" label="Product name">
+          <el-input v-model="form.name" clearable/>
         </el-form-item>
-        <el-form-item label="Price">
+        <el-form-item prop="price" label="Price">
           <el-input v-model="form.price"/>
         </el-form-item>
-        <el-form-item label="Product Code">
+        <el-form-item prop="product_code" label="Product Code">
           <el-input v-model="form.product_code"/>
         </el-form-item>
-        <el-form-item label="Quantity">
+        <el-form-item prop="quantity" label="Quantity">
           <el-input v-model="form.quantity"/>
         </el-form-item>
         <el-form-item label="Product state">
-          <el-select v-model="form.state"
-                     :disabled="!(form.quantity>0)">
+          <el-select v-model="form.state" :disabled="!(form.quantity > 0)">
             <el-option label="AVAILABLE" value="AVAILABLE"/>
             <el-option label="UNAVAILABLE" value="UNAVAILABLE"/>
           </el-select>
@@ -35,7 +28,7 @@
           <el-input v-model="form.desc" type="textarea"/>
         </el-form-item>
         <el-form-item>
-          <el-button v-if="!isCreated" @click="create" type="primary">Create</el-button>
+          <el-button v-if="!isCreated" @click="validateForm" type="primary">Create</el-button>
           <el-button @click="$emit('closeCreate')">Cancel</el-button>
         </el-form-item>
       </el-form>
@@ -67,6 +60,7 @@ import {onMounted, reactive, ref, watch} from 'vue'
 import axios from "axios";
 import moment from 'moment';
 import GetCard from "@/components/common/ShowCard.vue";
+import type {FormInstance} from "element-plus";
 
 
 onMounted(() => {
@@ -78,7 +72,7 @@ const URL_PRODUCT = "http://localhost:8080/product";
 const isVisibleImage = ref(false);
 const inputLinkImage = ref('');
 const isCreated = ref(false);
-const formRef = ref(null);
+const formRef = ref<FormInstance>();
 const form = reactive({
   name: '',
   price: null,
@@ -88,6 +82,21 @@ const form = reactive({
   state: "UNAVAILABLE",
   desc: '',
 })
+
+const rules = {
+  name: [
+    {required: true, message: 'Please input product name', trigger: 'blur'}
+  ],
+  price: [
+    {required: true, message: 'Please input price', trigger: 'blur'}
+  ],
+  product_code: [
+    {required: true, message: 'Please input product code', trigger: 'blur'}
+  ],
+  quantity: [
+    {required: true, message: 'Please input quantity', trigger: 'blur'}
+  ]
+}
 
 interface FormInp {
   id: number | null;
@@ -115,8 +124,18 @@ const createCompleted = reactive<FormInp>({
   createdBy: '',
 })
 
+const validateForm = () => {
+  formRef.value?.validate((valid) => {
+    if (valid) {
+      create();
+    } else {
+      console.warn('Validation failed!');
+    }
+  });
+};
+
 const create = async () => {
-  isCreated.value = false;
+  isCreated.value = false
   const body = {
     name: form.name,
     price: form.price,
@@ -127,27 +146,28 @@ const create = async () => {
     description: form.desc,
   }
 
-  const {data} = await axios.post(URL_PRODUCT, body);
+  const {data} = await axios.post(URL_PRODUCT, body)
 
   if (data) {
-    createCompleted.name = form.name;
-    createCompleted.price = form.price;
-    createCompleted.product_code = form.product_code;
-    createCompleted.quantity = form.quantity;
-    createCompleted.imageLink = form.imageLink;
-    createCompleted.state = form.state;
-    createCompleted.desc = form.desc;
-    createCompleted.id = data?.result?.id;
-    createCompleted.createdDate = formatDate(data?.result?.createdDate);
-    createCompleted.createdBy = data?.result?.createdBy;
+    Object.assign(createCompleted, {
+      name: form.name,
+      price: form.price,
+      product_code: form.product_code,
+      quantity: form.quantity,
+      imageLink: form.imageLink,
+      state: form.state,
+      desc: form.desc,
+      id: data?.result?.id,
+      createdDate: formatDate(data?.result?.createdDate),
+      createdBy: data?.result?.createdBy,
+    })
 
-    isCreated.value = true;
-    return data;
+    isCreated.value = true
   } else {
-    console.warn("Error creating student or response structure is incorrect.");
+    console.warn('Error creating product or response structure is incorrect.')
   }
-
 }
+
 
 const visibleImage = () => {
   isVisibleImage.value = true;
@@ -178,10 +198,6 @@ watch(isCreated, () => {
   }
 })
 
-// function validateName() {
-//   form.name.validateField('name', (valid) => {
-//   });
-// }
 </script>
 
 

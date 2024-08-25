@@ -23,7 +23,7 @@ const props = defineProps<{
 
 <template>
   <el-card style="max-width: 480px;">
-    <el-image :src="imageLink"/>
+    <el-image class="img-card" :src="imageLink"/>
     <span @click="$emit('visibleImage')" class="demonstration">
           <el-icon>
             <Edit/>
@@ -34,9 +34,13 @@ const props = defineProps<{
       <button disabled="true" style=" font-weight: 700;">
         Product Code: {{ createCompleted.product_code }}
       </button>
-      <h5 :style="createCompleted.state==='AVAILABLE'?'color:#EEB735':'color:#A0A8AB'">
-        {{ createCompleted.state }}
-      </h5>
+      <br>
+      <div style="display:inline-flex; align-content: center; color: goldenrod;">
+        <h1>State:&nbsp; </h1>
+        <h5 :style="createCompleted.state==='AVAILABLE'?'color:goldenrod':'color:#A0A8AB'">
+          {{ createCompleted.state }}
+        </h5>
+      </div>
     </div>
 
     <el-form :model="createCompleted" label-width="auto">
@@ -65,5 +69,9 @@ const props = defineProps<{
   color: var(--el-text-color-secondary);
   font-size: 14px;
   margin-bottom: 20px;
+}
+
+.img-card {
+  max-width: 280px;
 }
 </style>

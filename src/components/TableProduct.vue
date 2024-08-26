@@ -1,62 +1,47 @@
 <template>
   <section>
     <div class="flex gap-4 mb-4 items-center">
-      <el-input @input="getAllProduct()" v-model="search" style="width: 30%; margin: 30px 0;" placeholder="Search"
-                :suffix-icon="Search"
+      <el-input v-model="search" style="width: 30%; margin: 30px 0;" placeholder="Search"
+                clearable
       />
+      <el-button>
+        <el-icon @click="getAllProduct">
+          <Search :suffix-icon="Search"/>
+        </el-icon>
+      </el-button>
     </div>
   </section>
 
   <section>
     <el-table :data="products" border style="width: 100%">
       <el-table-column fixed type="index" label="No" width="90"/>
-      <el-table-column prop="name" label="Name" width="120">
-        <template #default="scope">
-          <el-input v-model="scope.row.name" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.name }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="name" label="Name" width="120"/>
       <el-table-column prop="description" label="Description" width="290">
         <template #default="scope">
-          <el-input v-model="scope.row.description" v-if="editingRows[scope.row.id]"/>
-          <span class="ellipsis" v-else>{{ scope.row.description }}</span>
+          <div class="description-text">
+            {{ scope.row.description }}
+          </div>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="Status" width="120">
+
+      <el-table-column prop="status" label="Status" width="130">
         <template #default="scope">
-          <el-input v-model="scope.row.status" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.status }}</span>
+    <span :style="scope.row.status==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
+      {{ scope.row.status }}
+    </span>
         </template>
       </el-table-column>
-      <el-table-column prop="price" label="Price" width="120">
-        <template #default="scope">
-          <el-input v-model="scope.row.price" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.price }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="product_code" label="Product Code" width="100">
-        <template #default="scope">
-          <el-input v-model="scope.row.product_code" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.product_code }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="quantity" label="Quantity" width="100">
-        <template #default="scope">
-          <el-input v-model="scope.row.quantity" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.quantity }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createdBy" label="Saler" width="120">
-        <template #default="scope">
-          <el-input v-model="scope.row.createdBy" v-if="editingRows[scope.row.id]"/>
-          <span v-else>{{ scope.row.createdBy }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="price" label="Price" width="120"/>
+      <el-table-column prop="product_code" label="Product Code" width="100"/>
+      <el-table-column prop="quantity" label="Quantity" width="100"/>
+      <el-table-column prop="createdBy" label="Saler" width="120"/>
       <el-table-column fixed="right" label="Operations" min-width="120">
         <template #default="scope">
-          <el-button link :type="editingRows[scope.row.id] ? 'warning' :'primary'" size="small"
-                     @click="Update(scope.row)">
-            {{ editingRows[scope.row.id] ? 'Save' : 'Edit' }}
+          <el-button link type='primary' size="small"
+                     @click="$emit('update',scope.row.id)">
+            <el-icon>
+              <Edit/>
+            </el-icon>
           </el-button>
           <el-button v-if="editingRows[scope.row.id]" link type="primary" size="small"
                      @click="closeFunction(scope.row.id)">
@@ -64,8 +49,10 @@
               <CircleCloseFilled/>
             </el-icon>
           </el-button>
-          <el-button link type="danger" size="small" @click="confirmDelete(scope.row.id)">
-            Delete
+          <el-button link type="warning" size="small" @click="confirmDelete(scope.row.id)">
+            <el-icon>
+              <DeleteFilled/>
+            </el-icon>
           </el-button>
         </template>
       </el-table-column>
@@ -106,8 +93,8 @@
 
 <script lang="ts" setup>
 import axios from 'axios';
-import {onMounted, reactive, ref} from "vue";
-import {CircleCloseFilled, Search} from '@element-plus/icons-vue';
+import {onMounted, reactive, ref, watch} from "vue";
+import {CircleCloseFilled, DeleteFilled, Edit, Search} from '@element-plus/icons-vue';
 import type {ComponentSize} from "element-plus";
 
 onMounted(() => {
@@ -117,6 +104,11 @@ onMounted(() => {
 interface EditingRows {
   [key: string]: boolean;
 }
+
+const emit = defineEmits(['update'])
+const props = defineProps({
+  loadTable: Boolean,
+});
 
 const URL_PRODUCT = "http://localhost:8080/product";
 const products = ref([]);
@@ -131,6 +123,18 @@ const page = reactive({
   totalElement: 0,
 });
 
+interface FormInp {
+  id: number;
+  name: string;
+  price: number | null;
+  product_code: string;
+  quantity: number | null;
+  imageLink: string;
+  status: 'UNAVAILABLE' | 'AVAILABLE';
+  description: string;
+  createdDate: string;
+  createdBy: string;
+}
 
 const getAllProduct = async () => {
   try {
@@ -160,37 +164,6 @@ const getAllProduct = async () => {
   }
 };
 
-const Update = async (product) => {
-  try {
-    if (editingRows.value[product.id]) {
-      const body = {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        product_code: product.product_code,
-        quantity: product.quantity,
-        imageLink: product.imageLink,
-        status: product.status,
-      };
-
-
-      const {data} = await axios.put(`${URL_PRODUCT}`, body);
-
-      if (data) {
-        await getAllProduct();
-        editingRows.value[product.id] = false;
-        return data;
-      } else {
-        console.warn("Error updating student or response structure is incorrect.");
-      }
-    } else {
-      editingRows.value[product.id] = true;
-    }
-  } catch (error) {
-    console.error("Error updating student:", error.message);
-  }
-};
 
 const Delete = async () => {
   try {
@@ -230,54 +203,8 @@ const closeFunction = (id) => {
   getAllProduct();
 }
 
-
-/**
- * Chưa fix
- * */
-
-interface LinkItem {
-  value: string
-  link: string
-}
-
-const state = ref('')
-const links = ref<LinkItem[]>([])
-
-const querySearch = (queryString: string, cb) => {
-  const results = queryString
-      ? links.value.filter(createFilter(queryString))
-      : links.value
-  // call callback function to return suggestion objects
-  cb(results)
-}
-const createFilter = (queryString) => {
-  return (restaurant) => {
-    return (
-        restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
-    )
-  }
-}
-const loadAll = () => {
-  return [
-    {value: 'vue', link: 'https://github.com/vuejs/vue'},
-    {value: 'element', link: 'https://github.com/ElemeFE/element'},
-    {value: 'cooking', link: 'https://github.com/ElemeFE/cooking'},
-    {value: 'mint-ui', link: 'https://github.com/ElemeFE/mint-ui'},
-    {value: 'vuex', link: 'https://github.com/vuejs/vuex'},
-    {value: 'vue-router', link: 'https://github.com/vuejs/vue-router'},
-    {value: 'babel', link: 'https://github.com/babel/babel'},
-  ]
-}
-const handleSelect = (item: LinkItem) => {
-  console.log(item)
-}
-
-const handleIconClick = (ev: Event) => {
-  console.log(ev)
-}
-
-onMounted(() => {
-  links.value = loadAll()
+watch(() => props.loadTable, () => {
+  getAllProduct();
 })
 
 </script>
@@ -302,11 +229,12 @@ onMounted(() => {
   color: #ddd;
 }
 
-.ellipsis {
-  display: inline-block;
-  max-width: 100%;
+.description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Số dòng tối đa */
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 </style>

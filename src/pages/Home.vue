@@ -2,20 +2,36 @@
 import {Menu as IconMenu} from '@element-plus/icons-vue'
 import TableProduct from "@/components/TableProduct.vue";
 import {ref} from "vue";
-import InformationForm from "@/components/InformationForm.vue";
+import CreateForm from "@/components/CreateForm.vue";
+import UpdateForm from "@/components/UpdateForm.vue";
 
+const idProduct = ref();
 const isViewProduct = ref(true);
 const isCreate = ref(false);
+const isUpdate = ref(false);
+const updateTable = ref(false);
+
+const injectUpdate = (id: number) => {
+  isUpdate.value = true;
+  idProduct.value = id;
+}
 const viewProduct = () => {
   isViewProduct.value = !isViewProduct.value;
 }
 const viewCreate = () => {
   isCreate.value = false;
 }
-
 const openCreate = () => {
   isCreate.value = true
-  // InformationForm.isCreated.value = false;
+}
+
+const loadTable = () => {
+  // updateTable giá trị true hay false đều update lại table hết, đây chỉ là hàm để TableProduct nhận biết có tác động
+  updateTable.value = !updateTable.value;
+}
+
+const viewUpate = () => {
+  isUpdate.value = false;
 }
 
 </script>
@@ -63,13 +79,20 @@ const openCreate = () => {
 
       <el-main>
         <div style="overflow: auto; height: 84vh" v-if="isViewProduct">
-          <TableProduct/>
+          <TableProduct :loadTable="updateTable" @update="injectUpdate"/>
         </div>
       </el-main>
     </el-container>
 
-    <el-dialog v-model="isCreate" title="Create" style="width: 80vw; top:-13%;">
-      <InformationForm v-if="isCreate" @close-create="viewCreate"/>
+
+    <!-- Dialog Create -->
+    <el-dialog v-model="isCreate" title="Create Product" style="width: 80vw; top:-13%;">
+      <CreateForm v-if="isCreate" @close-create="viewCreate"/>
+    </el-dialog>
+
+    <!-- Dialog Update -->
+    <el-dialog v-model="isUpdate" title="Update Product" style="width: 80vw; top:-13%;">
+      <UpdateForm v-if="isUpdate" @close-update="viewUpate" :idProduct="idProduct" @load-table="loadTable"/>
     </el-dialog>
   </el-container>
 </template>

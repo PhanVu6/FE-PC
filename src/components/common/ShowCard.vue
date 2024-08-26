@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {Edit} from "@element-plus/icons-vue";
 
-
 interface FormInp {
   id: number | null;
   name: string;
@@ -15,10 +14,21 @@ interface FormInp {
   createdBy: string;
 }
 
-const props = defineProps<{
-  createCompleted: FormInp;
-  imageLink: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+      createCompleted: FormInp;
+      imageLink: string;
+      isUpdate?: boolean;
+      modifiedBy?: string;
+      modifiedDate?: string;
+    }>(),
+    {
+      isUpdate: false,
+      modifiedBy: '',
+      modifiedDate: '',
+    }
+);
+
 </script>
 
 <template>
@@ -35,9 +45,9 @@ const props = defineProps<{
         Product Code: {{ createCompleted.product_code }}
       </button>
       <br>
-      <div style="display:inline-flex; align-content: center; color: goldenrod;">
+      <div style="display:inline-flex; align-content: center;">
         <h1>State:&nbsp; </h1>
-        <h5 :style="createCompleted.state==='AVAILABLE'?'color:goldenrod':'color:#A0A8AB'">
+        <h5 :style="createCompleted.state==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
           {{ createCompleted.state }}
         </h5>
       </div>
@@ -55,6 +65,12 @@ const props = defineProps<{
       </el-form-item>
       <el-form-item label="Create date: ">
         <el-form>{{ createCompleted.createdDate }}</el-form>
+      </el-form-item>
+      <el-form-item v-if="isUpdate" label="Modified by: ">
+        <el-form>{{ modifiedBy }}</el-form>
+      </el-form-item>
+      <el-form-item v-if="isUpdate" label="Modified date: ">
+        <el-form>{{ modifiedDate }}</el-form>
       </el-form-item>
       <el-form-item label="Desc: ">
         <el-form>{{ createCompleted.desc }}</el-form>

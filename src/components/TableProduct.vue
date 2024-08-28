@@ -1,100 +1,101 @@
 <template>
-  <section>
-    <div class="flex gap-4 mb-4 items-center">
-      <el-input v-model="search" style="width: 30%; margin: 30px 0;" placeholder="Search"
-                clearable
-      />
-      <el-button>
-        <el-icon @click="getAllProduct">
-          <Search :suffix-icon="Search"/>
-        </el-icon>
-      </el-button>
-    </div>
-  </section>
+  <div style="margin-bottom: 100px">
+    <section>
+      <div class="flex gap-4 mb-5 items-center">
+        <el-input v-model="search" style="width: 30%; margin: 30px 0;" placeholder="Search"
+                  clearable
+        />
+        <el-button @click="getAllProduct()">
+          <el-icon>
+            <Search :suffix-icon="Search"/>
+          </el-icon>
+        </el-button>
+      </div>
+      <div class="create-button">
+        <el-button @click="$emit('openCreate')" type="primary" :icon="CirclePlus" size="default">
+          Create Product
+        </el-button>
+      </div>
+    </section>
 
-  <section>
-    <el-table :data="products" border style="width: 100%">
-      <el-table-column fixed type="index" label="No" width="90"/>
-      <el-table-column prop="name" label="Name" width="120"/>
-      <el-table-column prop="description" label="Description" width="290">
-        <template #default="scope">
-          <div class="description-text">
-            {{ scope.row.description }}
-          </div>
-        </template>
-      </el-table-column>
+    <section>
+      <el-table :data="products" border>
+        <el-table-column fixed type="index" label="No" width="90"/>
+        <el-table-column prop="name" label="Name" width="120"/>
+        <el-table-column prop="description" label="Description" width="290">
+          <template #default="scope">
+            <div class="description-text">
+              {{ scope.row.description }}
+            </div>
+          </template>
+        </el-table-column>
 
-      <el-table-column prop="status" label="Status" width="130">
-        <template #default="scope">
+        <el-table-column prop="status" label="Status" width="130">
+          <template #default="scope">
     <span :style="scope.row.status==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
       {{ scope.row.status }}
     </span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="price" label="Price" width="120"/>
-      <el-table-column prop="product_code" label="Product Code" width="100"/>
-      <el-table-column prop="quantity" label="Quantity" width="100"/>
-      <el-table-column prop="createdBy" label="Saler" width="120"/>
-      <el-table-column fixed="right" label="Operations" min-width="120">
-        <template #default="scope">
-          <el-button link type='primary' size="small"
-                     @click="$emit('update',scope.row.id)">
-            <el-icon>
-              <Edit/>
-            </el-icon>
-          </el-button>
-          <el-button v-if="editingRows[scope.row.id]" link type="primary" size="small"
-                     @click="closeFunction(scope.row.id)">
-            <el-icon>
-              <CircleCloseFilled/>
-            </el-icon>
-          </el-button>
-          <el-button link type="warning" size="small" @click="confirmDelete(scope.row.id)">
-            <el-icon>
-              <DeleteFilled/>
-            </el-icon>
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+          </template>
+        </el-table-column>
+        <el-table-column prop="price" label="Price" width="120"/>
+        <el-table-column prop="product_code" label="Product Code" width="100"/>
+        <el-table-column prop="quantity" label="Quantity" width="100"/>
+        <el-table-column prop="createdBy" label="Saler" width="120"/>
+        <el-table-column fixed="right" label="Operations" min-width="80px">
+          <template #default="scope">
+            <el-button type='primary'
+                       @click="$emit('update',scope.row.id)" size="small" circle>
+              <el-icon>
+                <Edit/>
+              </el-icon>
+            </el-button>
+            <el-button type="danger" size="small" @click="confirmDelete(scope.row.id)" circle>
+              <el-icon>
+                <DeleteFilled/>
+              </el-icon>
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <el-dialog v-model="visible" title="Confirm Delete" width="500" draggable>
-      <span>Are you sure you want to delete this product?</span>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="visible = false">
-            Cancel
-          </el-button>
-          <el-button type="primary" @click="Delete">
-            Delete
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
-  </section>
+      <el-dialog v-model="visible" title="Confirm Delete" width="500" draggable>
+        <span>Are you sure you want to delete this product?</span>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="visible = false">
+              Cancel
+            </el-button>
+            <el-button type="primary" @click="Delete">
+              Delete
+            </el-button>
+          </div>
+        </template>
+      </el-dialog>
+    </section>
 
-  <section>
-    <div class="demo-pagination-block" style="margin-top: 20px">
-      <div class="demonstration">Change page size</div>
-      <el-pagination
-          v-model:current-page="page.currentPage"
-          v-model:page-size="page.pageSize"
-          :page-sizes="[1,5,10]"
-          :size="size"
-          :background="true"
-          layout="sizes, prev, pager, next"
-          :total="page.totalElement"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-      />
-    </div>
-  </section>
+    <section>
+      <div class="demo-pagination-block" style="margin-top: 20px">
+        <div class="demonstration">Change page size</div>
+        <el-pagination
+            v-model:current-page="page.currentPage"
+            v-model:page-size="page.pageSize"
+            :page-sizes="[1,5,10]"
+            :size="size"
+            :background="true"
+            layout="sizes, prev, pager, next"
+            :total="page.totalElement"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+      </div>
+    </section>
+  </div>
 </template>
 
 <script lang="ts" setup>
 import axios from 'axios';
 import {onMounted, reactive, ref, watch} from "vue";
-import {CircleCloseFilled, DeleteFilled, Edit, Search} from '@element-plus/icons-vue';
+import {CirclePlus, DeleteFilled, Edit, Search} from '@element-plus/icons-vue';
 import type {ComponentSize} from "element-plus";
 
 onMounted(() => {
@@ -142,8 +143,8 @@ const getAllProduct = async () => {
 
     const params = new URLSearchParams({
       search: search.value,
-      page: page.currentPage,
-      size: page.pageSize,
+      page: String(page.currentPage),
+      size: String(page.pageSize),
     });
 
     const {data} = await axios.get(`${URL_PRODUCT}`, {params});
@@ -193,14 +194,9 @@ const handleCurrentChange = (val: number) => {
   console.log(`current page: ${val}`)
 }
 
-const confirmDelete = (id) => {
+const confirmDelete = (id: number) => {
   deleteProductId.value = id;  // Lưu ID của dòng cần xóa
   visible.value = true;    // Mở dialog xác nhận
-}
-
-const closeFunction = (id) => {
-  editingRows.value[id] = false;
-  getAllProduct();
 }
 
 watch(() => props.loadTable, () => {
@@ -210,6 +206,13 @@ watch(() => props.loadTable, () => {
 </script>
 
 <style scoped>
+.create-button {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  margin: 10px 0;
+}
+
 .my-autocomplete li {
   line-height: normal;
   padding: 7px;

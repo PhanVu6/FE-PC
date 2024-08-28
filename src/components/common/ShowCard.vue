@@ -41,15 +41,15 @@ const props = withDefaults(
         </span>
     <div class="information-main">
       <h1>{{ createCompleted.name }}</h1>
-      <button disabled="true" style=" font-weight: 700;">
+      <button disabled="true" style="margin-top: 10px; font-weight: 700;">
         Product Code: {{ createCompleted.product_code }}
       </button>
       <br>
-      <div style="display:inline-flex; align-content: center;">
+      <div style="display:inline-flex; align-content: center; margin-top: 10px;">
         <h1>State:&nbsp; </h1>
-        <h5 :style="createCompleted.state==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
+        <h1 :style="createCompleted.state==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
           {{ createCompleted.state }}
-        </h5>
+        </h1>
       </div>
     </div>
 
@@ -90,4 +90,5 @@ const props = withDefaults(
 .img-card {
   max-width: 280px;
 }
+
 </style>

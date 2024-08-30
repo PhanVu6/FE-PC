@@ -72,9 +72,9 @@
               <el-form-item prop="name" label="Category name">
                 <el-input v-model="category.name" clearable/>
               </el-form-item>
-              <!--            <el-form-item prop="category_code" label="Category Code">-->
-              <!--              <el-input v-model="category.category_code"/>-->
-              <!--            </el-form-item>-->
+              <el-form-item prop="category_code" label="Category Code">
+                <el-input v-model="category.category_code"/>
+              </el-form-item>
               <el-form-item prop="imageLink" label="Create Image">
                 <el-input v-model="inputLinkImageCategory"/>
               </el-form-item>
@@ -88,7 +88,7 @@
                 <el-input v-model="category.description" type="textarea"/>
               </el-form-item>
               <el-form-item>
-                <el-button :disabled="continueUpdate" @click="validateForm" type="primary">Create</el-button>
+                <el-button :disabled="continueUpdate" @click="validateForm" type="primary">Update</el-button>
                 <el-button :disabled="continueUpdate" @click="validateCategory" type="primary">Add Category</el-button>
                 <el-button @click="$emit('closeCreate')">Cancel</el-button>
               </el-form-item>
@@ -136,7 +136,7 @@
 import {onMounted, reactive, ref, watch} from 'vue'
 import axios from "axios";
 import moment from 'moment';
-import GetCard from "@/components/product/ShowCard.vue";
+import GetCard from "@/components/product/common/ShowCard.vue";
 import type {FormInstance, TabsPaneContext} from "element-plus";
 import {ElNotification} from "element-plus";
 
@@ -415,17 +415,6 @@ const addCategory = () => {
   category.status = 'UNAVAILABLE';
   category.description = '';
 }
-
-const showFormProduct = () => {
-  isShowProduct.value = true;
-  isShowCategory.value = false;
-}
-
-const showFormCategory = () => {
-  isShowProduct.value = false;
-  isShowCategory.value = true;
-}
-
 const visibleImage = () => {
   isVisibleImage.value = true;
 }

@@ -43,7 +43,12 @@
         <el-table-column prop="createdBy" label="Saler" width="120"/>
         <el-table-column fixed="right" label="Operations" min-width="80px">
           <template #default="scope">
-            <el-button type='primary'
+            <el-button @click="$emit('viewDetail',scope.row.name, scope.row.id)" type='primary' size="small" circle>
+              <el-icon>
+                <Document/>
+              </el-icon>
+            </el-button>
+            <el-button type='warning'
                        @click="$emit('update',scope.row.id)" size="small" circle>
               <el-icon>
                 <Edit/>
@@ -95,7 +100,7 @@
 <script lang="ts" setup>
 import axios from 'axios';
 import {onMounted, reactive, ref, watch} from "vue";
-import {CirclePlus, DeleteFilled, Edit, Search} from '@element-plus/icons-vue';
+import {CirclePlus, DeleteFilled, Document, Edit, Search} from '@element-plus/icons-vue';
 import type {ComponentSize} from "element-plus";
 
 onMounted(() => {

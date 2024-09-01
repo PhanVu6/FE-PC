@@ -194,7 +194,6 @@ watch(
   margin-bottom: 200px;
 }
 
-// Category
 .description-text {
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Số dòng tối đa */

@@ -15,6 +15,10 @@
         </el-button>
       </div>
       <div class="create-button">
+
+        <el-button @click="downloadExcel" type="primary" :icon="Download" size="default">
+          Download Excel
+        </el-button>
         <el-button @click="$emit('openCreate')" type="primary" :icon="CirclePlus" size="default">
           Create Product
         </el-button>
@@ -109,16 +113,12 @@
 <script lang="ts" setup>
 import axios from 'axios'
 import {onMounted, reactive, ref, watch} from 'vue'
-import {CirclePlus, DeleteFilled, Document, Edit, Search} from '@element-plus/icons-vue'
+import {CirclePlus, DeleteFilled, Document, Download, Edit, Search} from '@element-plus/icons-vue'
 import type {ComponentSize} from 'element-plus'
 
 onMounted(() => {
   getAllProduct()
 })
-
-interface EditingRows {
-  [key: string]: boolean
-}
 
 const emit = defineEmits(['update'])
 const props = defineProps({
@@ -126,31 +126,18 @@ const props = defineProps({
 })
 
 const URL_PRODUCT = 'http://localhost:8080/product'
+const URL_EXCEL = 'http://localhost:8080/api/excel/products/download'
+
 const products = ref([])
 const search = ref('')
 const size = ref<ComponentSize>('default')
 const visible = ref(false)
-const editingRows = ref<EditingRows>({})
 const deleteProductId = ref()
 const page = reactive({
   currentPage: 1,
   pageSize: 10,
   totalElement: 0
 })
-
-interface FormInp {
-  id: number
-  name: string
-  price: number | null
-  product_code: string
-  quantity: number | null
-  imageLink: string
-  status: 'UNAVAILABLE' | 'AVAILABLE'
-  description: string
-  createdDate: string
-  createdBy: string
-}
-
 const getAllProduct = async () => {
   try {
     page.currentPage--
@@ -193,6 +180,29 @@ const Delete = async () => {
     console.error('Error delete student:', error.message)
   }
 }
+
+
+const downloadExcel = async () => {
+  try {
+    const response = await axios.get(URL_EXCEL, {
+      responseType: 'blob', // Đảm bảo rằng phản hồi được xử lý như một blob
+    });
+
+    // Tạo URL từ blob và tạo một link để tải file
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'products.xlsx'); // Tên file bạn muốn tải về
+    document.body.appendChild(link);
+    link.click();
+
+    // Sau khi tải xong thì hủy bỏ link và giải phóng bộ nhớ
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Failed to download Excel file:', error);
+  }
+};
 
 const handleSizeChange = (val: number) => {
   page.pageSize = val

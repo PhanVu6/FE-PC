@@ -3,14 +3,14 @@
     <section>
       <div class="flex gap-4 mb-5 items-center">
         <el-input
-          v-model="search"
-          style="width: 30%; margin: 30px 0"
-          placeholder="Search"
-          clearable
+            v-model="search"
+            style="width: 30%; margin: 30px 0"
+            placeholder="Search"
+            clearable
         />
         <el-button @click="getAllProduct()">
           <el-icon>
-            <Search :suffix-icon="Search" />
+            <Search :suffix-icon="Search"/>
           </el-icon>
         </el-button>
       </div>
@@ -23,8 +23,8 @@
 
     <section>
       <el-table :data="products" border>
-        <el-table-column fixed type="index" label="No" width="90" />
-        <el-table-column prop="name" label="Name" width="120" />
+        <el-table-column fixed type="index" label="No" width="90"/>
+        <el-table-column prop="name" label="Name" width="120"/>
         <el-table-column prop="description" label="Description" width="290">
           <template #default="scope">
             <div class="description-text">
@@ -36,7 +36,7 @@
         <el-table-column prop="status" label="Status" width="130">
           <template #default="scope">
             <span
-              :style="
+                :style="
                 scope.row.status === 'AVAILABLE'
                   ? 'color:var(--el-color-success)'
                   : 'color:var(--el-color-warning)'
@@ -46,30 +46,30 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="price" label="Price" width="120" />
-        <el-table-column prop="product_code" label="Product Code" width="100" />
-        <el-table-column prop="quantity" label="Quantity" width="100" />
-        <el-table-column prop="createdBy" label="Saler" width="120" />
+        <el-table-column prop="price" label="Price" width="120"/>
+        <el-table-column prop="product_code" label="Product Code" width="100"/>
+        <el-table-column prop="quantity" label="Quantity" width="100"/>
+        <el-table-column prop="createdBy" label="Saler" width="120"/>
         <el-table-column fixed="right" label="Operations" min-width="80px">
           <template #default="scope">
             <el-button
-              @click="$emit('viewDetail', scope.row.name, scope.row.id)"
-              type="primary"
-              size="small"
-              circle
+                @click="$emit('viewDetail', scope.row.name, scope.row.id)"
+                type="primary"
+                size="small"
+                circle
             >
               <el-icon>
-                <Document />
+                <Document/>
               </el-icon>
             </el-button>
             <el-button type="warning" @click="$emit('update', scope.row.id)" size="small" circle>
               <el-icon>
-                <Edit />
+                <Edit/>
               </el-icon>
             </el-button>
             <el-button type="danger" size="small" @click="confirmDelete(scope.row.id)" circle>
               <el-icon>
-                <DeleteFilled />
+                <DeleteFilled/>
               </el-icon>
             </el-button>
           </template>
@@ -80,8 +80,8 @@
         <span>Are you sure you want to delete this product?</span>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="visible = false"> Cancel </el-button>
-            <el-button type="primary" @click="Delete"> Delete </el-button>
+            <el-button @click="visible = false"> Cancel</el-button>
+            <el-button type="primary" @click="Delete"> Delete</el-button>
           </div>
         </template>
       </el-dialog>
@@ -91,15 +91,15 @@
       <div class="demo-pagination-block" style="margin-top: 20px">
         <div class="demonstration">Change page size</div>
         <el-pagination
-          v-model:current-page="page.currentPage"
-          v-model:page-size="page.pageSize"
-          :page-sizes="[1, 5, 10]"
-          :size="size"
-          :background="true"
-          layout="sizes, prev, pager, next"
-          :total="page.totalElement"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+            v-model:current-page="page.currentPage"
+            v-model:page-size="page.pageSize"
+            :page-sizes="[1, 5, 10]"
+            :size="size"
+            :background="true"
+            layout="sizes, prev, pager, next"
+            :total="page.totalElement"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
         />
       </div>
     </section>
@@ -108,9 +108,9 @@
 
 <script lang="ts" setup>
 import axios from 'axios'
-import { onMounted, reactive, ref, watch } from 'vue'
-import { CirclePlus, DeleteFilled, Document, Edit, Search } from '@element-plus/icons-vue'
-import type { ComponentSize } from 'element-plus'
+import {onMounted, reactive, ref, watch} from 'vue'
+import {CirclePlus, DeleteFilled, Document, Edit, Search} from '@element-plus/icons-vue'
+import type {ComponentSize} from 'element-plus'
 
 onMounted(() => {
   getAllProduct()
@@ -156,12 +156,12 @@ const getAllProduct = async () => {
     page.currentPage--
 
     const params = new URLSearchParams({
-      search: search.value,
+      name: search.value,
       page: String(page.currentPage),
       size: String(page.pageSize)
     })
 
-    const { data } = await axios.get(`${URL_PRODUCT}`, { params })
+    const {data} = await axios.get(`${URL_PRODUCT}`, {params})
 
     products.value = data?.result?.content ?? []
     page.totalElement = data?.result?.totalElements
@@ -180,7 +180,7 @@ const getAllProduct = async () => {
 
 const Delete = async () => {
   try {
-    const { data } = await axios.delete(`${URL_PRODUCT}/${deleteProductId.value}`)
+    const {data} = await axios.delete(`${URL_PRODUCT}/${deleteProductId.value}`)
 
     if (data) {
       await getAllProduct()
@@ -212,10 +212,10 @@ const confirmDelete = (id: number) => {
 }
 
 watch(
-  () => props.loadTable,
-  () => {
-    getAllProduct()
-  }
+    () => props.loadTable,
+    () => {
+      getAllProduct()
+    }
 )
 </script>
 

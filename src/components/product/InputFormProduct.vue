@@ -3,10 +3,11 @@
     <el-container>
       <el-aside class="block" width="480">
         <el-alert v-if="continueUpdate" title="Successful" type="success" show-icon style="max-width: 480px;"/>
-        <GetCard :is-update="toCompnentShowCard"
-                 :modified-by="createCompleted.modifiedBy"
-                 :modified-date="createCompleted.modifiedDate"
-                 :create-completed="createCompleted" :imageLink="form.imageLink"
+        <el-alert v-if="isCreated" title="Successful" type="success" show-icon style="max-width: 480px"/>
+        <GetCard :is-update="toComponentShowCard"
+                 :modified-by="form.modifiedBy"
+                 :modified-date="form.modifiedDate"
+                 :result="form" :imageLink="form.imageLink"
                  @visible-image="visibleImage"/>
       </el-aside>
 
@@ -22,15 +23,15 @@
               <el-form-item prop="price" label="Price">
                 <el-input v-model="form.price" clearable/>
               </el-form-item>
-              <!--            <el-form-item prop="product_code" label="Product Code">-->
-              <!--              <el-input v-model="form.product_code" clearable/>-->
-              <!--            </el-form-item>-->
+              <el-form-item v-if="isCreate" prop="product_code" label="Product Code">
+                <el-input v-model="form.product_code"/>
+              </el-form-item>
               <el-form-item prop="quantity" label="Quantity">
                 <el-input v-model="form.quantity" clearable/>
               </el-form-item>
               <el-form-item label="Categories">
                 <el-select
-                    v-model="idsCategory"
+                    v-model="selectedCategoryIds"
                     multiple
                     collapse-tags
                     collapse-tags-tooltip
@@ -41,25 +42,26 @@
                 >
                   <el-option
                       v-for="c in currentCategories"
-                      :key="c.id"
+                      :key="c.category_code"
                       :label="c.name"
                       :value="c.id"
                   />
                 </el-select>
               </el-form-item>
               <el-form-item label="Product state">
-                <el-select v-model="form.state" :disabled="!(form.quantity > 0)">
-                  <el-option label="AVAILABLE" value="AVAILABLE"/>
-                  <el-option label="UNAVAILABLE" value="UNAVAILABLE"/>
-                </el-select>
+                <el-switch v-model="checkpointProduct" :disabled="!(form.quantity > 0)"/>
               </el-form-item>
               <el-form-item label="Product description">
                 <el-input v-model="form.desc" type="textarea" clearable/>
               </el-form-item>
-              <el-form-item>
-                <el-button :disabled="continueUpdate" @click="validateForm()" type="primary">Update
+              <el-form-item v-if="!isCreate">
+                <el-button :disabled="continueUpdate" @click="validateFormUpdate()" type="primary">Update
                 </el-button>
                 <el-button @click="$emit('closeUpdate')">Cancel</el-button>
+              </el-form-item>
+              <el-form-item v-if="isCreate">
+                <el-button v-if="!isCreated" @click="validateFormCreate" type="primary">Create</el-button>
+                <el-button @click="$emit('closeCreate')">Cancel</el-button>
               </el-form-item>
             </el-form>
           </el-tab-pane>
@@ -79,34 +81,39 @@
                 <el-input v-model="inputLinkImageCategory"/>
               </el-form-item>
               <el-form-item label="Category state">
-                <el-select v-model="category.status">
-                  <el-option label="AVAILABLE" value="AVAILABLE"/>
-                  <el-option label="UNAVAILABLE" value="UNAVAILABLE"/>
-                </el-select>
+                <el-switch v-model="checkpointCategory"/>
               </el-form-item>
               <el-form-item label="Category description">
                 <el-input v-model="category.description" type="textarea"/>
               </el-form-item>
-              <el-form-item>
-                <el-button :disabled="continueUpdate" @click="validateForm" type="primary">Update</el-button>
+              <el-form-item v-if="!isCreate">
+                <el-button :disabled="continueUpdate" @click="validateFormUpdate" type="primary">Update</el-button>
                 <el-button :disabled="continueUpdate" @click="validateCategory" type="primary">Add Category</el-button>
+                <el-button @click="$emit('closeUpdate')">Cancel</el-button>
+              </el-form-item>
+              <el-form-item v-if="isCreate">
+                <el-button v-if="!isCreated" @click="validateFormCreate" type="primary">Create</el-button>
+                <el-button v-if="!isCreated" @click="validateCategory" type="primary"
+                >Add Category
+                </el-button
+                >
                 <el-button @click="$emit('closeCreate')">Cancel</el-button>
               </el-form-item>
             </el-form>
           </el-tab-pane>
-          <h1>New Categories</h1>
+          <!--          <h1>New Categories</h1>-->
 
-          <div class="box-create-category">
-            <div class="category-signup-box">
-              <h1>New Categories:</h1>
-              <p v-for="c in form.categories" :key="c.category_code">
-                <span> Name Category: {{ c.name }}</span>
-                <br> Image: {{ c.imageLink }}
-                <br> Category Code: {{ c.category_code }}
-                <br> -----------------------------------------
-              </p>
-            </div>
-          </div>
+          <!--          <div class="box-create-category">-->
+          <!--            <div class="category-signup-box">-->
+          <!--              <h1>New Categories:</h1>-->
+          <!--              <p v-for="c in form.categories" :key="c.category_code">-->
+          <!--                <span> Name Category: {{ c.name }}</span>-->
+          <!--                <br> Image: {{ c.imageLink }}-->
+          <!--                <br> Category Code: {{ c.category_code }}-->
+          <!--                <br> -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+          <!--              </p>-->
+          <!--            </div>-->
+          <!--          </div>-->
         </el-tabs>
       </el-main>
     </el-container>
@@ -143,15 +150,21 @@ import {ElNotification} from "element-plus";
 const props = defineProps({
   idProduct: {
     type: Number,
-    required: true,
-  }
+  },
+  isCreate: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 onMounted(async () => {
-  isUpdated.value = false;
-  await getDetailProduct(props.idProduct);
+  isCreated.value = false
+  isFillIn.value = false;
+  if (!props.isCreate) {
+    await getDetailProduct(props.idProduct);
+    form.state === 'UNAVAILABLE' ? checkpointProduct.value = false : checkpointProduct.value = true;
+  }
   await getAllCategory();
-
 })
 
 const activeName = ref('first');
@@ -163,15 +176,15 @@ const URL_CATEGORY = "http://localhost:8080/category";
 const isVisibleImage = ref(false);
 const inputLinkImage = ref('');
 const inputLinkImageCategory = ref('');
-const isUpdated = ref(false);
-const isShowProduct = ref(true);
-const isShowCategory = ref(false);
-const toCompnentShowCard = ref(true);
+const isFillIn = ref(false);
+const toComponentShowCard = ref(true);
 const formRef = ref<FormInstance>();
 const categoryRef = ref<FormInstance>();
 const continueUpdate = ref(false);
-
-const idsCategory = ref<number[]>([]);
+const isCreated = ref(false)
+const selectedCategoryIds = ref<number[]>([]);
+const checkpointProduct = ref(false);
+const checkpointCategory = ref(false);
 const currentCategories = ref<Category[]>([]);
 
 interface FormInp {
@@ -218,9 +231,7 @@ const createCompleted = reactive<FormInp>({
 })
 
 const form = reactive<FormInp>({
-  //thêm vào để đúng FormInp, không dùng tới (bắt đầu)
   id: null,
-  //thêm vào để đúng FormInp (kết thúc)
   name: '',
   price: null,
   product_code: '',
@@ -228,13 +239,11 @@ const form = reactive<FormInp>({
   imageLink: 'https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg',
   state: "UNAVAILABLE",
   desc: '',
-  //thêm vào để đúng FormInp, không dùng tới (bắt đầu)
   createdDate: '',
   createdBy: '',
   modifiedBy: '',
   modifiedDate: '',
-  //thêm vào để đúng FormInp (kết thúc)
-  categoryIds: idsCategory.value,
+  categoryIds: selectedCategoryIds.value,
   categories: [],
 })
 const category = reactive<Category>({
@@ -267,10 +276,12 @@ const rulesCategory = {
     {required: true, message: 'Please input category code', trigger: 'blur'}
   ],
 }
-const validateForm = () => {
+
+// Update
+const validateFormUpdate = () => {
   formRef.value?.validate(async (valid) => {
     if (valid) {
-      if (idsCategory.value.length > 0 || form.categories.length > 0) {
+      if (selectedCategoryIds.value.length > 0 || form.categories.length > 0) {
         await update();
         emits('loadTable')
       } else {
@@ -294,36 +305,36 @@ const validateCategory = () => {
     }
   });
 };
-const getDetailProduct = async (id: number) => {
+const getDetailProduct = async (id: number | any) => {
   try {
     const {data} = await axios.get(`${URL_PRODUCT}/${id}`);
 
     if (data?.result) {
       //Truyền vào card
-      createCompleted.id = data?.result?.id;
-      createCompleted.name = data?.result?.name;
-      createCompleted.desc = data?.result?.description;
-      createCompleted.price = data?.result?.price;
-      createCompleted.product_code = data?.result?.product_code;
-      createCompleted.quantity = data?.result?.quantity;
-      createCompleted.imageLink = data?.result?.imageLink;
-      createCompleted.state = data?.result?.status;
-      createCompleted.createdDate = formatDate(data?.result?.createdDate);
-      createCompleted.createdBy = data?.result?.createdBy;
-      createCompleted.modifiedBy = data?.result?.modifiedBy;
-      createCompleted.modifiedDate = formatDate(data?.result?.modifiedDate);
-      createCompleted.categoryIds = data.result.categories?.map((c: any) => c?.id) ?? [];
+      form.id = data?.result?.id;
+      form.name = data?.result?.name;
+      form.desc = data?.result?.description;
+      form.price = data?.result?.price;
+      form.product_code = data?.result?.product_code;
+      form.quantity = data?.result?.quantity;
+      form.imageLink = data?.result?.imageLink;
+      form.state = data?.result?.status;
+      form.createdDate = formatDate(data?.result?.createdDate);
+      form.createdBy = data?.result?.createdBy;
+      form.modifiedBy = data?.result?.modifiedBy;
+      form.modifiedDate = formatDate(data?.result?.modifiedDate);
+      form.categoryIds = data.result.categories?.map((c: any) => c?.id) ?? [];
       // Thêm id sẽ tự động thay đổi tới form (nhập vào)
-      idsCategory.value = createCompleted.categoryIds;
+      selectedCategoryIds.value = form.categoryIds;
 
-      //Truyền vào form
-      form.name = createCompleted.name;
-      form.price = createCompleted.price;
-      form.product_code = createCompleted.product_code;
-      form.quantity = createCompleted.quantity;
-      form.imageLink = createCompleted.imageLink ? createCompleted.imageLink : "https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg";
-      form.state = createCompleted.state;
-      form.desc = createCompleted.desc;
+      // //Truyền vào form
+      // form.name = createCompleted.name;
+      // form.price = createCompleted.price;
+      // form.product_code = createCompleted.product_code;
+      // form.quantity = createCompleted.quantity;
+      // form.imageLink = createCompleted.imageLink ? createCompleted.imageLink : "https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg";
+      // form.state = createCompleted.state;
+      // form.desc = createCompleted.desc;
 
     }
   } catch (error) {
@@ -350,7 +361,7 @@ const update = async () => {
   try {
     continueUpdate.value = false
     const body = {
-      id: createCompleted.id,
+      id: form.id,
       name: form.name,
       price: form.price,
       product_code: form.product_code,
@@ -365,7 +376,7 @@ const update = async () => {
     const {data} = await axios.put(URL_PRODUCT, body)
 
     if (data) {
-      Object.assign(createCompleted, {
+      Object.assign(form, {
         name: form.name,
         price: form.price,
         product_code: form.product_code,
@@ -382,14 +393,14 @@ const update = async () => {
       })
 
       // Kiểm tra nếu được tạo mới thì sẽ push và trong list currentCategories, để gọi lên các category được liên kết
-      createCompleted.categories.map(c => {
+      form.categories.map(c => {
         if (!currentCategories.value.find(element => element.id === c.id)) {
           currentCategories.value.push(c)
         }
       })
 
       // Thêm id sẽ tự động thay đổi tới form (nhập vào)
-      idsCategory.value = createCompleted.categories?.map((c: any) => c?.id) ?? [];
+      selectedCategoryIds.value = form.categories?.map((c: any) => c?.id) ?? [];
 
       continueUpdate.value = true;
       setTimeout(() => {
@@ -403,22 +414,105 @@ const update = async () => {
   }
 }
 
+// Create
+const validateFormCreate = () => {
+  formRef.value?.validate(async (valid) => {
+    if (valid) {
+      if (selectedCategoryIds.value.length > 0 || form.categories.length > 0) {
+        await create()
+        emits('loadTable')
+      } else {
+        ElNotification({
+          title: 'Error',
+          message: 'You must link or create a Category',
+          type: 'error'
+        })
+      }
+    } else {
+      console.warn('Validation failed!')
+    }
+  })
+}
+
+const create = async () => {
+  isCreated.value = false
+  const body = {
+    name: form.name,
+    price: form.price,
+    product_code: form.product_code,
+    quantity: form.quantity,
+    imageLink: form.imageLink,
+    status: form.state,
+    description: form.desc,
+    categoryIds: form.categoryIds,
+    categories: form.categories
+  }
+
+  const {data} = await axios.post(URL_PRODUCT, body)
+
+  if (data) {
+    Object.assign(form, {
+      name: form.name,
+      price: form.price,
+      product_code: form.product_code,
+      quantity: form.quantity,
+      imageLink: form.imageLink,
+      state: form.state,
+      desc: form.desc,
+      id: data?.result?.id,
+      createdDate: formatDate(data?.result?.createdDate),
+      createdBy: data?.result?.createdBy,
+      categories: data?.result.categories
+    })
+    // Kiểm tra nếu được tạo mới thì sẽ push và trong list currentCategories, để gọi lên các category được liên kết
+    form.categories.map((c) => {
+      if (!currentCategories.value.find((element) => element.id === c.id)) {
+        currentCategories.value.push(c)
+      }
+    })
+
+    // Thêm id sẽ tự động thay đổi tới form (nhập vào)
+    selectedCategoryIds.value = form.categories?.map((c: any) => c?.id) ?? []
+
+    isCreated.value = true
+  } else {
+    console.warn('Error creating product or response structure is incorrect.')
+  }
+}
+
+
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
 
 const addCategory = () => {
-  form.categories.push({...category});
+  // Giả sử `id` được tạo mới cho danh mục
+  const newCategory = {
+    ...category,
+    id: generateNewId(), // Hàm này sẽ tạo `id` mới
+  };
+
+  form.categories.push(newCategory);
+  currentCategories.value.push(newCategory);
+
+  // Cập nhật selectedCategoryIds
+  selectedCategoryIds.value.push(newCategory.id);
+
+  // Xóa dữ liệu form nhập danh mục sau khi thêm vào
   category.name = '';
   category.category_code = '';
   inputLinkImageCategory.value = '';
   category.status = 'UNAVAILABLE';
   category.description = '';
-}
+};
+
+// Hàm giả lập tạo ID mới
+const generateNewId = () => {
+  return Date.now(); // Ví dụ tạo ID bằng thời gian hiện tại
+};
 const visibleImage = () => {
   isVisibleImage.value = true;
 }
-
 
 const inputImage = (image: string | null) => {
   if (image !== null && image !== '') {
@@ -431,8 +525,8 @@ const formatDate = (date: any) => {
   return moment(date).format('DD.MM.YYYY HH:mm:ss');
 }
 
-watch(isUpdated, () => {
-  if (!isUpdated.value) {
+watch(isFillIn, () => {
+  if (!isFillIn.value) {
     form.name = '';
     form.price = null;
     form.product_code = '';
@@ -442,8 +536,13 @@ watch(isUpdated, () => {
     form.desc = '';
   }
 })
-
-watch(idsCategory, (newValue) => {
+watch(checkpointProduct, (newValue) => {
+  form.state = !newValue ? 'UNAVAILABLE' : 'AVAILABLE'
+})
+watch(checkpointCategory, (newValue) => {
+  category.status = !newValue ? 'UNAVAILABLE' : 'AVAILABLE'
+})
+watch(selectedCategoryIds, (newValue) => {
   form.categoryIds = newValue;
 });
 </script>

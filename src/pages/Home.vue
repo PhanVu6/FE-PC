@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Menu as IconMenu } from '@element-plus/icons-vue'
-import type { TabPaneName } from 'element-plus'
+import {Menu as IconMenu} from '@element-plus/icons-vue'
+import type {TabPaneName} from 'element-plus'
 import TableProduct from '@/components/product/TableProduct.vue'
-import { onMounted, ref } from 'vue'
-import CreateForm from '@/components/product/CreateForm.vue'
-import UpdateForm from '@/components/product/UpdateForm.vue'
+import {onMounted, ref} from 'vue'
+import InputFormProduct from '@/components/product/InputFormProduct.vue'
 import ProductDetail from '@/components/product/common/ProductDetail.vue'
 
 onMounted(() => {
@@ -27,10 +26,10 @@ const editableTabsValue = ref('table-product')
 const editableTabs = ref<FormTabs[]>([])
 
 const handleTabsAdd = (
-  title: string,
-  targetName: TabPaneName | undefined,
-  content: any,
-  props?: any
+    title: string,
+    targetName: TabPaneName | undefined,
+    content: any,
+    props?: any
 ) => {
   const existTabs = editableTabs.value.find((tab) => tab.name === String(targetName))
   if (!existTabs) {
@@ -74,7 +73,7 @@ const viewProduct = () => {
   isViewProductTab.value = !isViewProductTab.value
 
   if (isViewProductTab.value) {
-    handleTabsAdd('Table Product', 'table-product', TableProduct, { loadTable: updateTable })
+    handleTabsAdd('Table Product', 'table-product', TableProduct, {loadTable: updateTable})
   } else {
     handleCloseTabs('table-product')
   }
@@ -82,7 +81,7 @@ const viewProduct = () => {
 
 const viewDetailProduct = (nameProduct: string, id: number) => {
   nameProduct = 'View Detail: ' + nameProduct
-  handleTabsAdd(nameProduct, id, ProductDetail, { idProduct: id, loadTable: updateTable })
+  handleTabsAdd(nameProduct, id, ProductDetail, {idProduct: id, loadTable: updateTable})
 }
 
 const viewCreate = () => {
@@ -110,15 +109,15 @@ const viewUpate = () => {
             <template #title>
               <p>
                 <el-icon>
-                  <icon-menu />
+                  <icon-menu/>
                 </el-icon>
                 Menu
               </p>
             </template>
             <el-menu-item
-              index="1-1"
-              @click="viewProduct"
-              :style="
+                index="1-1"
+                @click="viewProduct"
+                :style="
                 isViewProductTab
                   ? 'background: var(--el-menu-hover-bg-color); color: cornflowerblue;'
                   : ''
@@ -133,41 +132,47 @@ const viewUpate = () => {
 
     <el-main>
       <el-tabs
-        v-model="editableTabsValue"
-        type="card"
-        closable
-        class="demo-tabs"
-        @tab-remove="handleCloseTabs"
+          v-model="editableTabsValue"
+          type="card"
+          closable
+          class="demo-tabs"
+          @tab-remove="handleCloseTabs"
       >
         <el-tab-pane
-          v-for="item in editableTabs"
-          :key="item.name"
-          :label="item.title"
-          :name="item.name"
+            v-for="item in editableTabs"
+            :key="item.name"
+            :label="item.title"
+            :name="item.name"
         >
           <!--  open-create , view-detail , update: là của product   -->
           <component
-            :is="item.content"
-            :="item.props"
-            @open-create="openCreate"
-            @view-detail="viewDetailProduct"
-            @update="injectUpdate"
+              :is="item.content"
+              :="item.props"
+              @open-create="openCreate"
+              @view-detail="viewDetailProduct"
+              @update="injectUpdate"
           />
         </el-tab-pane>
       </el-tabs>
 
       <!-- Dialog Create -->
+      <!--      <el-dialog v-model="isCreate" title="Create Product" style="width: 80vw; top: -13%">-->
+      <!--        <CreateForm v-if="isCreate" @close-create="viewCreate" @load-table="loadTable" />-->
+      <!--      </el-dialog>-->
       <el-dialog v-model="isCreate" title="Create Product" style="width: 80vw; top: -13%">
-        <CreateForm v-if="isCreate" @close-create="viewCreate" @load-table="loadTable" />
+        <InputFormProduct v-if="isCreate" :isCreate="isCreate" @close-create="viewCreate"
+                          :idProduct="idProduct"
+                          @load-table="loadTable"/>
       </el-dialog>
 
       <!-- Dialog Update -->
       <el-dialog v-model="isUpdate" title="Update Product" style="width: 80vw; top: -13%">
-        <UpdateForm
-          v-if="isUpdate"
-          @close-update="viewUpate"
-          :idProduct="idProduct"
-          @load-table="loadTable"
+        <InputFormProduct
+            :isCreate="isCreate"
+            v-if="isUpdate"
+            @close-update="viewUpate"
+            :idProduct="idProduct"
+            @load-table="loadTable"
         />
       </el-dialog>
     </el-main>

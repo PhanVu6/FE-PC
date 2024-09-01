@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import {onMounted, reactive, ref, watch} from 'vue'
 import axios from 'axios'
 import moment from 'moment/moment'
-import { fa } from 'element-plus/es/locales.mjs'
 
 onMounted(() => {
   getDetailProduct(props.idProduct)
@@ -36,7 +35,7 @@ const infor = reactive({
 
 const getDetailProduct = async (id: number) => {
   try {
-    const { data } = await axios.get(`${URL_PRODUCT}/${id}`)
+    const {data} = await axios.get(`${URL_PRODUCT}/${id}`)
 
     if (data?.result) {
       infor.id = data?.result?.id
@@ -71,17 +70,17 @@ const changeLengthDesc = () => {
 }
 
 watch(
-  () => props.loadTable,
-  () => {
-    getDetailProduct(props.idProduct)
-  }
+    () => props.loadTable,
+    () => {
+      getDetailProduct(props.idProduct)
+    }
 )
 </script>
 
 <template>
   <el-row :gutter="20">
     <el-col :span="10">
-      <el-image class="img-detail" :src="infor.imageLink" />
+      <el-image class="img-detail" :src="infor.imageLink"/>
     </el-col>
     <el-col :span="14">
       <div class="header">
@@ -98,11 +97,11 @@ watch(
         <div class="description">
           <h3>Describe</h3>
           <p v-if="checkLengthDesc">
-            {{ infor.description.slice(0, 250) }}
+            {{ infor.description.slice(0, 150) }}
             <span
-              class="more"
-              v-if="infor.description.length > 250"
-              @click="changeLengthDesc(index)"
+                class="more"
+                v-if="infor.description.length > 150"
+                @click="changeLengthDesc()"
             >
               ...See more
             </span>
@@ -110,9 +109,9 @@ watch(
           <p v-else-if="!checkLengthDesc">
             {{ infor.description }}
             <span
-              class="more"
-              v-if="infor.description.length > 250"
-              @click="changeLengthDesc(index)"
+                class="more"
+                v-if="infor.description.length > 150"
+                @click="changeLengthDesc()"
             >
               .See less
             </span>
@@ -122,9 +121,9 @@ watch(
     </el-col>
   </el-row>
   <el-table :data="infor.categories" style="width: 100%" border>
-    <el-table-column prop="name" label="Name" width="180" />
-    <el-table-column prop="status" label="Status" width="180" />
-    <el-table-column prop="category_code" label="Category code" width="180" />
+    <el-table-column prop="name" label="Name" width="180"/>
+    <el-table-column prop="status" label="Status" width="180"/>
+    <el-table-column prop="category_code" label="Category code" width="180"/>
     <el-table-column prop="description" label="Description">
       <template #default="scope">
         <div class="description-text">
@@ -138,9 +137,6 @@ watch(
 <style scoped>
 .img-detail {
   border-radius: 30px;
-}
-
-.container {
 }
 
 .product_code-status {
@@ -198,6 +194,7 @@ watch(
   margin-bottom: 200px;
 }
 
+// Category
 .description-text {
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Số dòng tối đa */

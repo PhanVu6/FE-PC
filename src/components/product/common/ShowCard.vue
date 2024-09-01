@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import {Edit} from "@element-plus/icons-vue";
+import {ref} from "vue";
+
+const checkLengthDesc = ref(true)
 
 interface FormInp {
   id: number | null;
@@ -16,7 +19,7 @@ interface FormInp {
 
 const props = withDefaults(
     defineProps<{
-      createCompleted: FormInp;
+      result: FormInp;
       imageLink: string;
       isUpdate?: boolean;
       modifiedBy?: string;
@@ -29,6 +32,9 @@ const props = withDefaults(
     }
 );
 
+const changeLengthDesc = () => {
+  checkLengthDesc.value = !checkLengthDesc.value
+}
 </script>
 
 <template>
@@ -40,31 +46,31 @@ const props = withDefaults(
           </el-icon>
         </span>
     <div class="information-main">
-      <h1>{{ createCompleted.name }}</h1>
+      <h1>{{ result.name }}</h1>
       <button disabled="true" style="margin-top: 10px; font-weight: 700;">
-        Product Code: {{ createCompleted.product_code }}
+        Product Code: {{ result.product_code }}
       </button>
       <br>
       <div style="display:inline-flex; align-content: center; margin-top: 10px;">
         <h1>State:&nbsp; </h1>
-        <h1 :style="createCompleted.state==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
-          {{ createCompleted.state }}
+        <h1 :style="result.state==='AVAILABLE'?'color:var(--el-color-success)':'color:var(--el-color-warning)'">
+          {{ result.state }}
         </h1>
       </div>
     </div>
 
-    <el-form :model="createCompleted" label-width="auto">
+    <el-form :model="result" label-width="auto">
       <el-form-item label="Price: ">
-        <el-form>{{ createCompleted.price }}</el-form>
+        <el-form>{{ result.price }}</el-form>
       </el-form-item>
       <el-form-item label="Quantity: ">
-        <el-form>{{ createCompleted.quantity }}</el-form>
+        <el-form>{{ result.quantity }}</el-form>
       </el-form-item>
       <el-form-item label="Create by: ">
-        <el-form>{{ createCompleted.createdBy }}</el-form>
+        <el-form>{{ result.createdBy }}</el-form>
       </el-form-item>
       <el-form-item label="Create date: ">
-        <el-form>{{ createCompleted.createdDate }}</el-form>
+        <el-form>{{ result.createdDate }}</el-form>
       </el-form-item>
       <el-form-item v-if="isUpdate" label="Modified by: ">
         <el-form>{{ modifiedBy }}</el-form>
@@ -73,7 +79,28 @@ const props = withDefaults(
         <el-form>{{ modifiedDate }}</el-form>
       </el-form-item>
       <el-form-item label="Desc: ">
-        <el-form>{{ createCompleted.desc }}</el-form>
+        <el-form>
+          <p v-if="checkLengthDesc">
+            {{ result.desc.slice(0, 100) }}
+            <span
+                class="more"
+                v-if="result.desc.length > 100"
+                @click="changeLengthDesc()"
+            >
+              ...See more
+            </span>
+          </p>
+          <p v-else-if="!checkLengthDesc">
+            {{ result.desc }}
+            <span
+                class="more"
+                v-if="result.desc.length > 100"
+                @click="changeLengthDesc()"
+            >
+              .See less
+            </span>
+          </p>
+        </el-form>
       </el-form-item>
     </el-form>
   </el-card>
@@ -89,6 +116,27 @@ const props = withDefaults(
 
 .img-card {
   max-width: 280px;
+}
+
+.description h3 {
+  background: #d6d0cf;
+  height: 34px;
+  align-content: center;
+  padding: 5px;
+}
+
+.description p {
+  margin: 14px 3px;
+}
+
+.more {
+  color: rgb(50, 118, 206);
+}
+
+.more:hover {
+  cursor: pointer;
+  color: green;
+  text-decoration: underline;
 }
 
 </style>

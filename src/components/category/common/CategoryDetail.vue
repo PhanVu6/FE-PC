@@ -15,22 +15,20 @@ const props = defineProps({
   loadTable: Boolean
 })
 
+
 const URL_CATEGORY = 'http://localhost:8080/category'
 const checkLengthDesc = ref(true)
 const infor = reactive({
   id: null,
   name: '',
   description: '',
-  price: '',
   category_code: '',
-  quantity: null,
   imageLink: '',
   status: '',
   createdDate: '',
   modifiedDate: '',
   createdBy: '',
   modifiedBy: '',
-  categories: []
 })
 
 const getDetailCategory = async (id: number) => {
@@ -41,16 +39,13 @@ const getDetailCategory = async (id: number) => {
       infor.id = data?.result?.id
       infor.name = data?.result?.name
       infor.description = data?.result?.description
-      infor.price = formatPrice(data?.result?.price)
       infor.category_code = data?.result?.category_code
-      infor.quantity = data?.result?.quantity
       infor.imageLink = data?.result?.imageLink
       infor.status = data?.result?.status
       infor.createdDate = formatDate(data?.result?.createdDate)
       infor.createdBy = data?.result?.createdBy
       infor.modifiedBy = data?.result?.modifiedBy
       infor.modifiedDate = formatDate(data?.result?.modifiedDate)
-      infor.categories = data.result.categories
     }
   } catch (error) {
     console.error('Failed to fetch students:', error)
@@ -58,11 +53,6 @@ const getDetailCategory = async (id: number) => {
 }
 const formatDate = (date: any) => {
   return moment(date).format('DD.MM.YYYY HH:mm:ss')
-}
-
-const formatPrice = (value: number) => {
-  let val = (value / 1).toFixed(0).replace('.', ',')
-  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
 const changeLengthDesc = () => {

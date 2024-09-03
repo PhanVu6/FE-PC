@@ -1,81 +1,74 @@
 <template>
-  <el-tabs
-      v-model="editableTabsValue"
-      type="card"
-      closable
-      class="demo-tabs"
-      @tab-remove="handleCloseTabs"
-  >
-    <el-tab-pane
-        v-for="item in editableTabs"
-        :key="item.name"
-        :label="item.title"
-        :name="item.name"
-    >
-      <component
-          :is="item.content"
-          :props="item.props"
-          @open-create="openCreate"
-          @view-detail="viewDetailProduct"
-          @update="injectUpdate"
-      />
-    </el-tab-pane>
-  </el-tabs>
+  <form @submit.prevent="submitForm">
+    <!-- Add your form fields here -->
+    <input type="file" multiple @change="handleFileChange">
+    <input type="text" v-model="product.name" placeholder="Product Name">
+    <!-- Add other fields as needed -->
+    <button type="submit">Submit</button>
+  </form>
 </template>
 
-<script setup lang="ts">
-import {ref} from 'vue'
-import type {TabPaneName} from 'element-plus'
-import ProductDetail from "@/components/product/common/ProductDetail.vue";
+<script>
+import axios from 'axios';
 
-const editableTabsValue = ref('table-product')
-const editableTabs = ref<{ title: string, name: string, content: any, props?: Record<string, any> }[]>([])
-const isCreate = ref(false)
-const handleTabsAdd = (title: string, targetName: TabPaneName | undefined, content: any, props?: any) => {
-  const existTabs = editableTabs.value.find((tab) => tab.name === String(targetName))
-  if (!existTabs) {
-    editableTabs.value.push({
-      title: title,
-      name: String(targetName),
-      content: content,
-      props: props
-    })
-  }
-  editableTabsValue.value = String(targetName)
-}
+export default {
+  data() {
+    return {
+      product: {
+        "name": "Laptop LOQ",
+        "description": "A high-performance laptop for gaming and work",
+        "price": 1500.00,
+        "product_code": "LP123456",
+        "quantity": 100,
+        "imageLink": "https://bizweb.dktcdn.net/100/362/971/products/s-l1600-d8b1657b-6673-47ca-b7c6-ce3ebe399a27.jpg?v=1696495824197",
+        "status": "AVAILABLE",
+        "categoryIds": [
+          1, 2, null, null
+        ],
+        "categories": [
+          {
+            "name": "Hi-tech",
+            "description": "Category for all electronic devices including smartphones, laptops, and accessories.",
+            "category_code": "ELEC001",
+            "imageLink": "https://bizweb.dktcdn.net/100/362/971/products/s-l1600-d8b1657b-6673-47ca-b7c6-ce3ebe399a27.jpg?v=1696495824197",
+            "status": "AVAILABLE"
+          }
+        ]
+      },
+      files: []
+    };
+  },
+  methods: {
+    handleFileChange(event) {
+      this.files = Array.from(event.target.files);
+    },
+    async submitForm() {
+      const formData = new FormData();
+      formData.append('product', JSON.stringify(this.product));
+      this.files.forEach(file => {
+        formData.append('files', file);
+      });
 
-const handleCloseTabs = (targetName: TabPaneName | undefined) => {
-  const tabs = editableTabs.value
-  let activeName = editableTabsValue.value
-  if (activeName === targetName) {
-    tabs.forEach((tab, index) => {
-      if (tab.name === targetName) {
-        const nextTab = tabs[index + 1] || tabs[index - 1]
-        if (nextTab) {
-          activeName = nextTab.name
-        }
+      try {
+        // POST request
+        const response = await axios.post('http://localhost:8080/product/img', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        console.log('Response:', response.data);
+
+        // PUT request (if needed, e.g., for updates)
+        // const updateResponse = await axios.put('http://localhost:8080/img', formData, {
+        //   headers: {
+        //     'Content-Type': 'multipart/form-data'
+        //   }
+        // });
+        // console.log('Update Response:', updateResponse.data);
+      } catch (error) {
+        console.error('Error:', error);
       }
-    })
+    }
   }
-
-  editableTabsValue.value = activeName
-  editableTabs.value = tabs.filter((tab) => tab.name !== targetName)
-}
-
-const openCreate = () => {
-  isCreate.value = true
-}
-
-const viewDetailProduct = (nameProduct: string, id: number) => {
-  nameProduct = 'View Detail: ' + nameProduct
-  handleTabsAdd(nameProduct, id, ProductDetail, {idProduct: id, loadTable: updateTable})
-}
-
-const injectUpdate = (id: number) => {
-  // Define how to handle update
-}
+};
 </script>
-
-<style scoped>
-/* Add any styles specific to the tabs component here */
-</style>

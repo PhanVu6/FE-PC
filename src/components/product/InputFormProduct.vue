@@ -21,13 +21,13 @@
                 <el-input v-model="form.name" clearable/>
               </el-form-item>
               <el-form-item prop="price" label="Price">
-                <el-input v-model="form.price" clearable/>
+                <el-input v-model.number="form.price" clearable/>
               </el-form-item>
               <el-form-item v-if="isCreate" prop="product_code" label="Product Code">
                 <el-input v-model="form.product_code"/>
               </el-form-item>
               <el-form-item prop="quantity" label="Quantity">
-                <el-input v-model="form.quantity" clearable/>
+                <el-input v-model.number="form.quantity" clearable/>
               </el-form-item>
               <el-form-item label="Categories">
                 <el-select
@@ -131,7 +131,7 @@ import {onMounted, reactive, ref, watch} from 'vue'
 import axios from "axios";
 import moment from 'moment';
 import GetCard from "@/components/product/common/ShowCard.vue";
-import type {FormInstance, TabsPaneContext} from "element-plus";
+import type {FormInstance, FormRules, TabsPaneContext} from "element-plus";
 import {ElNotification} from "element-plus";
 
 const props = defineProps({
@@ -174,12 +174,13 @@ const checkpointProduct = ref(false);
 const checkpointCategory = ref(false);
 const currentCategories = ref<Category[]>([]);
 
+
 interface FormInp {
   id: number | null;
   name: string;
-  price: number | null;
+  price: number;
   product_code: string;
-  quantity: number | null;
+  quantity: number;
   imageLink: string;
   state: 'UNAVAILABLE' | 'AVAILABLE';
   desc: string;
@@ -189,6 +190,13 @@ interface FormInp {
   modifiedDate: string;
   categoryIds: number[],
   categories: Category[],
+  imageProducts: ImageProduct[],
+}
+
+interface ImageProduct {
+  "id": number,
+  "imageName": string,
+  "imagePath": string
 }
 
 interface Category {
@@ -203,9 +211,9 @@ interface Category {
 const form = reactive<FormInp>({
   id: null,
   name: '',
-  price: null,
+  price: 0,
   product_code: '',
-  quantity: null,
+  quantity: 0,
   imageLink: 'https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg',
   state: "UNAVAILABLE",
   desc: '',
@@ -215,6 +223,7 @@ const form = reactive<FormInp>({
   modifiedDate: '',
   categoryIds: selectedCategoryIds.value,
   categories: [],
+  imageProducts: [],
 })
 const category = reactive<Category>({
   id: null,
@@ -224,28 +233,30 @@ const category = reactive<Category>({
   status: 'UNAVAILABLE',
   description: '',
 })
-const rules = {
+const rules = reactive<FormRules<FormInp>>({
   name: [
     {required: true, message: 'Please input product name', trigger: 'blur'}
   ],
   price: [
-    {required: true, message: 'Please input price', trigger: 'blur'}
+    {required: true, message: 'Please input price', trigger: 'blur'},
+    {type: "number", message: 'Price must be a number', trigger: ['blur', 'change']}
   ],
   product_code: [
     {required: true, message: 'Please input product code', trigger: 'blur'}
   ],
   quantity: [
-    {required: true, message: 'Please input quantity', trigger: 'blur'}
+    {required: true, message: 'Please input quantity', trigger: 'blur'},
+    {type: "number", message: 'Price must be a number', trigger: ['blur', 'change']}
   ]
-}
-const rulesCategory = {
+});
+const rulesCategory = reactive<FormRules<Category>>({
   name: [
     {required: true, message: 'Please input category name', trigger: 'blur'}
   ],
   category_code: [
     {required: true, message: 'Please input category code', trigger: 'blur'}
   ],
-}
+});
 
 // Update
 const validateFormUpdate = () => {
@@ -488,9 +499,9 @@ const formatDate = (date: any) => {
 watch(isFillIn, () => {
   if (!isFillIn.value) {
     form.name = '';
-    form.price = null;
+    form.price = 0;
     form.product_code = '';
-    form.quantity = null;
+    form.quantity = 0;
     form.imageLink = 'https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg';
     form.state = 'UNAVAILABLE';
     form.desc = '';

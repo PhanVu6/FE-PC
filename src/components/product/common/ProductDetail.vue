@@ -15,22 +15,56 @@ const props = defineProps({
   loadTable: Boolean
 })
 
+interface ImageProduct {
+  "id": number,
+  "imageName": string,
+  "imagePath": string
+}
+
+interface Category {
+  id: number | null,
+  name: string,
+  category_code: string,
+  imageLink: string,
+  status: 'UNAVAILABLE' | 'AVAILABLE',
+  description: string,
+}
+
+interface FormInp {
+  id: number | null;
+  name: string;
+  price: number;
+  product_code: string;
+  quantity: number;
+  imageLink: string;
+  status: 'UNAVAILABLE' | 'AVAILABLE';
+  description: string;
+  createdDate: string;
+  createdBy: string;
+  modifiedBy: string;
+  modifiedDate: string;
+  categories: Category[],
+  imageProducts: ImageProduct[],
+}
+
 const URL_PRODUCT = 'http://localhost:8080/product'
+const URL_IMAGES = 'http://localhost:8080/api/images';
 const checkLengthDesc = ref(true)
-const infor = reactive({
+const infor = reactive<FormInp>({
   id: null,
   name: '',
   description: '',
-  price: '',
+  price: 0,
   product_code: '',
-  quantity: null,
+  quantity: 0,
   imageLink: '',
-  status: '',
+  status: 'UNAVAILABLE',
   createdDate: '',
   modifiedDate: '',
   createdBy: '',
   modifiedBy: '',
-  categories: []
+  categories: [],
+  imageProducts: [],
 })
 
 const getDetailProduct = async (id: number) => {
@@ -41,7 +75,7 @@ const getDetailProduct = async (id: number) => {
       infor.id = data?.result?.id
       infor.name = data?.result?.name
       infor.description = data?.result?.description
-      infor.price = formatPrice(data?.result?.price)
+      infor.price = Number(formatPrice(data?.result?.price))
       infor.product_code = data?.result?.product_code
       infor.quantity = data?.result?.quantity
       infor.imageLink = data?.result?.imageLink
@@ -51,6 +85,10 @@ const getDetailProduct = async (id: number) => {
       infor.modifiedBy = data?.result?.modifiedBy
       infor.modifiedDate = formatDate(data?.result?.modifiedDate)
       infor.categories = data.result.categories
+      infor.imageProducts = data.result.imageProducts.map(img => ({
+        ...img,
+        imagePath: `${URL_IMAGES}?imageName=${encodeURIComponent(img.imageName)}` // Thay đổi đường dẫn đến URL API
+      }));
     }
   } catch (error) {
     console.error('Failed to fetch students:', error)
@@ -80,7 +118,12 @@ watch(
 <template>
   <el-row :gutter="20">
     <el-col :span="10">
-      <el-image class="img-detail" :src="infor.imageLink"/>
+
+      <!--      <el-image class="img-detail" :src="infor.imageProducts[0]?.imagePath"/>-->
+      <div class="demo-image__lazy">
+        <el-image class="img-detail" :src="infor.imageLink"/>
+        <el-image v-for="url in infor.imageProducts" :key="url.id" :src="url?.imagePath" lazy/>
+      </div>
     </el-col>
     <el-col :span="14">
       <div class="header">
@@ -120,7 +163,7 @@ watch(
       </div>
     </el-col>
   </el-row>
-  <el-table :data="infor.categories" style="width: 100%" border>
+  <el-table :data="infor.categories" style="width: 100%; margin-top: 30px" border>
     <el-table-column prop="name" label="Name" width="180"/>
     <el-table-column prop="status" label="Status" width="180"/>
     <el-table-column prop="category_code" label="Category code" width="180"/>
@@ -135,8 +178,19 @@ watch(
 </template>
 
 <style scoped>
-.img-detail {
-  border-radius: 30px;
+.demo-image__lazy {
+  height: 450px;
+  overflow-y: auto;
+}
+
+.demo-image__lazy .el-image {
+  display: block;
+  min-height: 200px;
+  margin-bottom: 10px;
+}
+
+.demo-image__lazy .el-image:last-child {
+  margin-bottom: 0;
 }
 
 .product_code-status {

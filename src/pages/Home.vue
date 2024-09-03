@@ -5,15 +5,22 @@ import TableProduct from '@/components/product/TableProduct.vue'
 import {onMounted, ref} from 'vue'
 import InputFormProduct from '@/components/product/InputFormProduct.vue'
 import ProductDetail from '@/components/product/common/ProductDetail.vue'
+import TableCategory from "@/components/category/TableCategory.vue";
+import InputFormCategory from "@/components/category/InputFormCategory.vue";
+import CategoryDetail from "@/components/category/common/CategoryDetail.vue";
 
 onMounted(() => {
   viewProduct()
 })
 const idProduct = ref()
+const idCategory = ref()
 const isCreate = ref(false)
 const isUpdate = ref(false)
+const isCreateCategory = ref(false)
+const isUpdateCategory = ref(false)
 const updateTable = ref(false)
 const isViewProductTab = ref(false)
+const isViewCategoryTab = ref(false)
 
 interface FormTabs {
   title: string
@@ -61,6 +68,10 @@ const handleCloseTabs = (targetName: TabPaneName | undefined) => {
     isViewProductTab.value = false // Cập nhật trạng thái khi tab bị xóa
   }
 
+  if (targetName === 'table-category') {
+    isViewCategoryTab.value = false // Cập nhật trạng thái khi tab bị xóa
+  }
+
   editableTabsValue.value = activeName
   editableTabs.value = tabs.filter((tab) => tab.name !== targetName)
 }
@@ -69,26 +80,57 @@ const injectUpdate = (id: number) => {
   isUpdate.value = true
   idProduct.value = id
 }
+const injectUpdateCategory = (id: number) => {
+  isUpdateCategory.value = true
+  idCategory.value = id
+}
 const viewProduct = () => {
   isViewProductTab.value = !isViewProductTab.value
 
   if (isViewProductTab.value) {
     handleTabsAdd('Table Product', 'table-product', TableProduct, {loadTable: updateTable})
+    handleCloseTabs('table-category')
   } else {
     handleCloseTabs('table-product')
+
+  }
+}
+
+const viewCategory = () => {
+  isViewCategoryTab.value = !isViewCategoryTab.value
+
+  if (isViewCategoryTab.value) {
+    handleTabsAdd('Table Category', 'table-category', TableCategory, {loadTable: updateTable})
+    handleCloseTabs('table-product')
+  } else {
+    handleCloseTabs('table-category')
+
   }
 }
 
 const viewDetailProduct = (nameProduct: string, id: number) => {
-  nameProduct = 'View Detail: ' + nameProduct
+  nameProduct = 'View Detail Product: ' + nameProduct
   handleTabsAdd(nameProduct, id, ProductDetail, {idProduct: id, loadTable: updateTable})
+}
+
+const viewDetailCategory = (nameCategory: string, id: number) => {
+  nameCategory = 'View Detail Category: ' + nameCategory
+  handleTabsAdd(nameCategory, id, CategoryDetail, {idCategory: id, loadTable: updateTable})
 }
 
 const viewCreate = () => {
   isCreate.value = false
 }
+const viewCreateCateggory = () => {
+  isCreateCategory.value = false
+}
 const openCreate = () => {
   isCreate.value = true
+}
+
+const openCreateCategory = () => {
+
+  isCreateCategory.value = true
 }
 
 const loadTable = () => {
@@ -97,6 +139,9 @@ const loadTable = () => {
 
 const viewUpate = () => {
   isUpdate.value = false
+}
+const viewUpateCategory = () => {
+  isUpdateCategory.value = false
 }
 </script>
 
@@ -125,6 +170,17 @@ const viewUpate = () => {
             >
               Manager Product
             </el-menu-item>
+            <el-menu-item
+                index="1-2"
+                @click="viewCategory"
+                :style="
+                isViewCategoryTab
+                  ? 'background: var(--el-menu-hover-bg-color); color: cornflowerblue;'
+                  : ''
+              "
+            >
+              Manager Category
+            </el-menu-item>
           </el-sub-menu>
         </el-menu>
       </el-scrollbar>
@@ -151,14 +207,14 @@ const viewUpate = () => {
               @open-create="openCreate"
               @view-detail="viewDetailProduct"
               @update="injectUpdate"
+
+              @viewDetailCategory="viewDetailCategory"
+              @openCreateCategory="openCreateCategory"
+              @updateCategory="injectUpdateCategory"
           />
         </el-tab-pane>
       </el-tabs>
-
       <!-- Dialog Create -->
-      <!--      <el-dialog v-model="isCreate" title="Create Product" style="width: 80vw; top: -13%">-->
-      <!--        <CreateForm v-if="isCreate" @close-create="viewCreate" @load-table="loadTable" />-->
-      <!--      </el-dialog>-->
       <el-dialog v-model="isCreate" title="Create Product" style="width: 80vw; top: -13%">
         <InputFormProduct v-if="isCreate" :isCreate="isCreate" @close-create="viewCreate"
                           :idProduct="idProduct"
@@ -172,6 +228,24 @@ const viewUpate = () => {
             v-if="isUpdate"
             @close-update="viewUpate"
             :idProduct="idProduct"
+            @load-table="loadTable"
+        />
+      </el-dialog>
+
+      <!-- Dialog Create -->
+      <el-dialog v-model="isCreateCategory" title="Create Category" style="width: 80vw; top: -13%">
+        <InputFormCategory v-if="isCreateCategory" :isCreate="isCreateCategory" @close-create="viewCreateCateggory"
+                           :id-category="idCategory"
+                           @load-table="loadTable"/>
+      </el-dialog>
+
+      <!-- Dialog Update -->
+      <el-dialog v-model="isUpdateCategory" title="Update Category" style="width: 80vw; top: -13%">
+        <InputFormCategory
+            :isCreate="isCreateCategory"
+            v-if="isUpdateCategory"
+            @close-update="viewUpateCategory"
+            :id-category="idCategory"
             @load-table="loadTable"
         />
       </el-dialog>

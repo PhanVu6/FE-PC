@@ -101,19 +101,6 @@
               </el-form-item>
             </el-form>
           </el-tab-pane>
-          <!--          <h1>New Categories</h1>-->
-
-          <!--          <div class="box-create-category">-->
-          <!--            <div class="category-signup-box">-->
-          <!--              <h1>New Categories:</h1>-->
-          <!--              <p v-for="c in form.categories" :key="c.category_code">-->
-          <!--                <span> Name Category: {{ c.name }}</span>-->
-          <!--                <br> Image: {{ c.imageLink }}-->
-          <!--                <br> Category Code: {{ c.category_code }}-->
-          <!--                <br> -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
-          <!--              </p>-->
-          <!--            </div>-->
-          <!--          </div>-->
         </el-tabs>
       </el-main>
     </el-container>
@@ -213,23 +200,6 @@ interface Category {
   description: string,
 }
 
-const createCompleted = reactive<FormInp>({
-  id: null,
-  name: '',
-  price: null,
-  product_code: '',
-  quantity: null,
-  imageLink: '',
-  state: 'UNAVAILABLE',
-  desc: '',
-  createdDate: '',
-  createdBy: '',
-  modifiedBy: '',
-  modifiedDate: '',
-  categoryIds: [],
-  categories: [],
-})
-
 const form = reactive<FormInp>({
   id: null,
   name: '',
@@ -326,16 +296,6 @@ const getDetailProduct = async (id: number | any) => {
       form.categoryIds = data.result.categories?.map((c: any) => c?.id) ?? [];
       // Thêm id sẽ tự động thay đổi tới form (nhập vào)
       selectedCategoryIds.value = form.categoryIds;
-
-      // //Truyền vào form
-      // form.name = createCompleted.name;
-      // form.price = createCompleted.price;
-      // form.product_code = createCompleted.product_code;
-      // form.quantity = createCompleted.quantity;
-      // form.imageLink = createCompleted.imageLink ? createCompleted.imageLink : "https://cdn.tgdd.vn/Files/2015/09/09/698241/zalo20.jpg";
-      // form.state = createCompleted.state;
-      // form.desc = createCompleted.desc;
-
     }
   } catch (error) {
     console.error("Failed to fetch students:", error);

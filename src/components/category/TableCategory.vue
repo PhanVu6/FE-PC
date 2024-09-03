@@ -26,10 +26,10 @@
             clearable
         />
         <el-input
-            v-if="viewFilter.productCode"
-            v-model="productCode"
+            v-if="viewFilter.categoryCode"
+            v-model="categoryCode"
             style="width: 30%;"
-            placeholder="Search Product Code"
+            placeholder="Search Category Code"
             clearable
         />
         <el-date-picker
@@ -48,7 +48,7 @@
             value-format="YYYY-MM-DD"
             style="width: 30%"
         />
-        <el-button @click="getAllProduct()">
+        <el-button @click="getAllCategory()">
           <el-icon>
             <Search :suffix-icon="Search"/>
           </el-icon>
@@ -59,18 +59,18 @@
         <el-button @click="downloadExcel" type="primary" :icon="Download" size="default">
           Download Excel
         </el-button>
-        <el-button @click="$emit('openCreate')" type="primary" :icon="Upload" size="default">
-          Create Product
+        <el-button @click="$emit('openCreateCategory')" type="primary" :icon="Upload" size="default">
+          Create Category
         </el-button>
       </div>
     </section>
 
 
     <section>
-      <el-table :data="products" border>
+      <el-table :data="category" border>
         <el-table-column fixed type="index" label="No" width="90"/>
         <el-table-column prop="name" label="Name" width="120"/>
-        <el-table-column prop="description" label="Description" width="290">
+        <el-table-column prop="description" label="Description" width="390">
           <template #default="scope">
             <div class="description-text">
               {{ scope.row.description }}
@@ -91,14 +91,12 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="price" label="Price" width="120"/>
-        <el-table-column prop="product_code" label="Product Code" width="100"/>
-        <el-table-column prop="quantity" label="Quantity" width="100"/>
+        <el-table-column prop="category_code" label="Category Code" width="100"/>
         <el-table-column prop="createdBy" label="Saler" width="120"/>
         <el-table-column fixed="right" label="Operations" min-width="80px">
           <template #default="scope">
             <el-button
-                @click="$emit('viewDetail', scope.row.name, scope.row.id)"
+                @click="$emit('viewDetailCategory', scope.row.name, scope.row.id)"
                 type="primary"
                 size="small"
                 circle
@@ -107,7 +105,7 @@
                 <Document/>
               </el-icon>
             </el-button>
-            <el-button type="warning" @click="$emit('update', scope.row.id)" size="small" circle>
+            <el-button type="warning" @click="$emit('updateCategory', scope.row.id)" size="small" circle>
               <el-icon>
                 <Edit/>
               </el-icon>
@@ -122,7 +120,7 @@
       </el-table>
 
       <el-dialog v-model="visible" title="Confirm Delete" width="500" draggable>
-        <span>Are you sure you want to delete this product?</span>
+        <span>Are you sure you want to delete this category?</span>
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="visible = false"> Cancel</el-button>
@@ -158,48 +156,48 @@ import {DeleteFilled, Document, Download, Edit, Search, Upload} from '@element-p
 import type {ComponentSize} from 'element-plus'
 
 onMounted(() => {
-  getAllProduct()
+  getAllCategory()
 })
 
-const emit = defineEmits(['update'])
+const emit = defineEmits(['updateCategory', 'openCreateCategory', 'viewDetailCategory'])
 const props = defineProps({
   loadTable: Boolean
 })
 
-const URL_PRODUCT = 'http://localhost:8080/product'
-const URL_EXCEL = 'http://localhost:8080/api/excel/products/download'
+const URL_PRODUCT = 'http://localhost:8080/category'
+const URL_EXCEL = 'http://localhost:8080/api/excel/categories/download'
 
-const products = ref([])
+const category = ref([])
 const searchName = ref('')
 const size = ref<ComponentSize>('default')
 const visible = ref(false)
-const deleteProductId = ref()
+const deleteCategoryId = ref()
 const selectedOptions = ref([]);
 
-const productCode = ref('');
+const categoryCode = ref('');
 const startDate = ref('')
 const endDate = ref('')
 
 
 const viewFilter = reactive({
-  productCode: false,
+  categoryCode: false,
   startDate: false,
   endDate: false,
 });
 
 const options = [
-  {value: 'productCode', label: 'Product Code'},
+  {value: 'categoryCode', label: 'Category Code'},
   {value: 'startDate', label: 'Start Date'},
   {value: 'endDate', label: 'End Date'},
 ];
 
 const handleSelectChange = (selected: any) => {
-  viewFilter.productCode = selected.includes('productCode');
+  viewFilter.categoryCode = selected.includes('categoryCode');
   viewFilter.startDate = selected.includes('startDate');
   viewFilter.endDate = selected.includes('endDate');
 
-  if (viewFilter.productCode === false) {
-    productCode.value = '';
+  if (viewFilter.categoryCode === false) {
+    categoryCode.value = '';
   }
   if (viewFilter.startDate === false) {
     startDate.value = '';
@@ -215,15 +213,14 @@ const page = reactive({
   pageSize: 10,
   totalElement: 0
 })
-const getAllProduct = async () => {
+const getAllCategory = async () => {
   try {
     // Giảm currentPage trước khi lấy dữ liệu
     page.currentPage = Math.max(page.currentPage, 1); // Đảm bảo currentPage không dưới 1
 
-
     const params = new URLSearchParams({
       name: searchName.value,
-      productCode: productCode.value,
+      categoryCode: categoryCode.value,
       startDate: startDate.value ? startDate.value : '',
       endDate: endDate.value ? endDate.value : '',
       page: String(page.currentPage - 1),
@@ -232,14 +229,14 @@ const getAllProduct = async () => {
 
     const {data} = await axios.get(`${URL_PRODUCT}`, {params})
 
-    products.value = data?.result?.content ?? []
+    category.value = data?.result?.content ?? []
     page.totalElement = data?.result?.totalElements
 
     const pageable = data?.result?.pageable
     page.currentPage = pageable.pageNumber + 1
     page.pageSize = pageable.pageSize
 
-    if (products.value.length === 0) {
+    if (category.value.length === 0) {
       console.warn('No students found or response structure is incorrect.')
     }
   } catch (error) {
@@ -249,10 +246,10 @@ const getAllProduct = async () => {
 
 const Delete = async () => {
   try {
-    const {data} = await axios.delete(`${URL_PRODUCT}/${deleteProductId.value}`)
+    const {data} = await axios.delete(`${URL_PRODUCT}/${deleteCategoryId.value}`)
 
     if (data) {
-      await getAllProduct()
+      await getAllCategory()
       visible.value = false
       return data
     } else {
@@ -274,7 +271,7 @@ const downloadExcel = async () => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'products.xlsx'); // Tên file bạn muốn tải về
+    link.setAttribute('download', 'category.xlsx'); // Tên file bạn muốn tải về
     document.body.appendChild(link);
     link.click();
 
@@ -289,24 +286,24 @@ const downloadExcel = async () => {
 const handleSizeChange = (val: number) => {
   page.pageSize = val
   page.currentPage = 1
-  getAllProduct()
+  getAllCategory()
   console.log(`${val} items per page`)
 }
 const handleCurrentChange = (val: number) => {
   page.currentPage = val
-  getAllProduct()
+  getAllCategory()
   console.log(`current page: ${val}`)
 }
 
 const confirmDelete = (id: number) => {
-  deleteProductId.value = id // Lưu ID của dòng cần xóa
+  deleteCategoryId.value = id // Lưu ID của dòng cần xóa
   visible.value = true // Mở dialog xác nhận
 }
 
 watch(
     () => props.loadTable,
     () => {
-      getAllProduct()
+      getAllCategory()
     }
 )
 </script>

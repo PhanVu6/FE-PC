@@ -48,7 +48,7 @@ interface FormInp {
 }
 
 const URL_PRODUCT = 'http://localhost:8080/product'
-const URL_IMAGES = 'http://localhost:8080/api/images';
+const URL_IMAGES = 'http://localhost:8080/image-product/api/images';
 const checkLengthDesc = ref(true)
 const infor = reactive<FormInp>({
   id: null,
@@ -121,7 +121,7 @@ watch(
 
       <!--      <el-image class="img-detail" :src="infor.imageProducts[0]?.imagePath"/>-->
       <div class="demo-image__lazy">
-        <el-image class="img-detail" :src="infor.imageLink"/>
+        <!--        <el-image class="img-detail" :src="infor.imageLink"/>-->
         <el-image v-for="url in infor.imageProducts" :key="url.id" :src="url?.imagePath" lazy/>
       </div>
     </el-col>

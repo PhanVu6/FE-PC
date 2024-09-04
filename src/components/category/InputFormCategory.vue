@@ -5,6 +5,7 @@
         <el-alert v-if="continueUpdate" title="Successful" type="success" show-icon style="max-width: 480px;"/>
         <el-alert v-if="isCreated" title="Successful" type="success" show-icon style="max-width: 480px"/>
         <GetCard :is-update="toComponentShowCard"
+                 :files="files"
                  :modified-by="category.modifiedBy"
                  :modified-date="category.modifiedDate"
                  :result="category" :imageLink="category.imageLink"
@@ -21,6 +22,43 @@
           </el-form-item>
           <el-form-item v-if="isCreate" prop="category_code" label="Category Code">
             <el-input v-model="category.category_code"/>
+          </el-form-item>
+          <el-form-item label="Add Image">
+            <div style="">
+              <div class="images">
+                <label class="custom-file-upload">Click to upload
+                  <input type="file" multiple @change="onFileChange" class="input-file"/>
+                </label>
+
+                <div>
+                  <!--                  <ul v-if="files.length > 0">-->
+                  <!--                    <li v-for="(file, index) in files" :key="index">-->
+                  <!--                      <span>{{ file.name }}</span>-->
+                  <!--                      <el-button class="remove-img" type="warning" size="small" @click="removeFile(index)"-->
+                  <!--                                 style="margin-left: 10px"-->
+                  <!--                                 circle>-->
+                  <!--                        <el-icon>-->
+                  <!--                          <CircleCloseFilled/>-->
+                  <!--                        </el-icon>-->
+                  <!--                      </el-button>-->
+                  <!--                    </li>-->
+                  <!--                  </ul>-->
+
+                  <el-scrollbar height="100px">
+                    <p v-for="(file, index) in files" :key="index" class="scrollbar-demo-item">{{ file.name }}
+                      <el-button class="remove-img" type="warning" size="small" @click="removeFile(index)"
+                                 style="margin-left: 10px;float: right; "
+                                 circle>
+                        <el-icon>
+                          <CircleCloseFilled/>
+                        </el-icon>
+                      </el-button>
+                    </p>
+                  </el-scrollbar>
+                </div>
+              </div>
+
+            </div>
           </el-form-item>
           <el-form-item label="Category state">
             <el-switch v-model="checkpointCategory"/>
@@ -70,6 +108,8 @@ import moment from 'moment';
 import GetCard from "@/components/category/common/ShowCard.vue";
 import type {FormInstance} from "element-plus";
 
+import {CircleCloseFilled} from "@element-plus/icons-vue";
+
 const props = defineProps({
   idCategory: {
     type: Number,
@@ -92,7 +132,7 @@ onMounted(async () => {
 const emits = defineEmits(['closeCreate', 'loadTable']);
 
 const URL_CATEGORY = "http://localhost:8080/category";
-
+const URL_IMAGES = 'http://localhost:8080/image-category/api/images';
 const isVisibleImage = ref(false);
 const inputLinkImage = ref('');
 const isFillIn = ref(false);
@@ -102,6 +142,8 @@ const continueUpdate = ref(false);
 const isCreated = ref(false)
 const selectedCategoryIds = ref<number[]>([]);
 const checkpointCategory = ref(false);
+const files = ref<File[]>([]);
+const imageUrls = ref<string[]>([]);
 
 interface FormInp {
   id: number | null;
@@ -120,6 +162,12 @@ interface FormInp {
   categories: Category[],
 }
 
+interface ImageCategory {
+  "id": number,
+  "imageName": string,
+  "imagePath": string
+}
+
 interface Category {
   id: number | null;
   name: string;
@@ -131,6 +179,7 @@ interface Category {
   createdBy: string;
   modifiedBy: string;
   modifiedDate: string;
+  imageCategories: ImageCategory[];
 }
 
 const form = reactive<FormInp>({
@@ -148,6 +197,7 @@ const form = reactive<FormInp>({
   modifiedDate: '',
   categoryIds: selectedCategoryIds.value,
   categories: [],
+
 })
 const category = reactive<Category>({
   id: null,
@@ -160,7 +210,9 @@ const category = reactive<Category>({
   createdBy: '',
   modifiedBy: '',
   modifiedDate: '',
+  imageCategories: [],
 })
+
 
 const rulesCategory = {
   name: [
@@ -170,7 +222,18 @@ const rulesCategory = {
     {required: true, message: 'Please input category code', trigger: 'blur'}
   ],
 }
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files) {
+    // Chuyển đổi files thành mảng File[] và thêm vào files.value
+    files.value = [...files.value, ...Array.from(target.files)];
+  }
+};
 
+// Xóa tệp khỏi danh sách
+const removeFile = (index: number) => {
+  files.value.splice(index, 1);
+};
 // Update
 const validateFormUpdate = () => {
   categoryRef.value?.validate(async (valid) => {
@@ -199,6 +262,22 @@ const getDetailProduct = async (id: number | any) => {
       category.createdBy = data?.result?.createdBy;
       category.modifiedBy = data?.result?.modifiedBy;
       category.modifiedDate = formatDate(data?.result?.modifiedDate);
+      category.imageCategories = data.result.imageCategories;
+      for (const image of category.imageCategories) {
+        // Lấy ảnh từ API dưới dạng Blob
+        const response = await axios.get(`${URL_IMAGES}?imageName=${encodeURIComponent(image.imageName)}`, {
+          responseType: 'blob'
+        });
+
+        // Chuyển Blob thành File
+        const file = new File([response.data], image.imageName, {type: response.data.type});
+
+        // Thêm file vào mảng files
+        files.value.push(file);
+
+        // Tạo URL từ Blob
+        imageUrls.value.push(URL.createObjectURL(file));
+      }
     }
   } catch (error) {
     console.error("Failed to fetch students:", error);
@@ -209,6 +288,7 @@ const getDetailProduct = async (id: number | any) => {
 const update = async () => {
   try {
     continueUpdate.value = false
+    const formData = new FormData();
     const body = {
       id: category.id,
       name: category.name,
@@ -218,14 +298,30 @@ const update = async () => {
       description: category.description,
     }
 
-    const {data} = await axios.put(URL_CATEGORY, body)
+    formData.append('category', JSON.stringify(body));
 
+    // Append the files if any
+    if (files.value.length > 0) {
+      files.value.forEach((file: File) => {
+        formData.append('files', file);
+      });
+    }
+
+    for (const pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
+
+    const {data} = await axios.put(`${URL_CATEGORY}/img`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     if (data) {
       Object.assign(category, {
-        name: category.name,
-        imageLink: category.imageLink,
-        state: category.status,
-        desc: category.description,
+        name: data.result.name,
+        imageLink: data.result.imageLink,
+        state: data.result.status,
+        desc: data.result.description,
         id: data?.result?.id,
         createdDate: formatDate(data?.result?.createdDate),
         createdBy: data?.result?.createdBy,
@@ -259,6 +355,7 @@ const validateFormCreate = () => {
 
 const create = async () => {
   isCreated.value = false
+  const formData = new FormData();
   const body = {
     name: category.name,
     category_code: category.category_code,
@@ -267,22 +364,38 @@ const create = async () => {
     description: category.description,
   }
 
-  const {data} = await axios.post(URL_CATEGORY, body)
+  formData.append('category', JSON.stringify(body));
 
-  if (data) {
-    Object.assign(category, {
-      name: category.name,
-      imageLink: category.imageLink,
-      state: category.status,
-      desc: category.description,
-      id: data?.result?.id,
-      createdDate: formatDate(data?.result?.createdDate),
-      createdBy: data?.result?.createdBy,
-    })
+  // Append the files if any
+  if (files.value.length > 0) {
+    files.value.forEach((file: File) => {
+      formData.append('files', file);
+    });
+  }
 
-    isCreated.value = true
-  } else {
-    console.warn('Error creating product or response structure is incorrect.')
+  for (const pair of formData.entries()) {
+    console.log(`${pair[0]}: ${pair[1]}`);
+  }
+  try {
+    const {data} = await axios.post(`${URL_CATEGORY}/img`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    if (data) {
+      Object.assign(category, {
+        ...category,
+        id: data?.result?.id,
+        createdDate: formatDate(data?.result?.createdDate),
+        createdBy: data?.result?.createdBy,
+      })
+
+      isCreated.value = true
+    } else {
+      console.warn('Error creating product or response structure is incorrect.')
+    }
+  } catch (error) {
+    console.error('Error creating product:', error.message);
   }
 }
 
@@ -317,6 +430,34 @@ watch(checkpointCategory, (newValue) => {
 
 
 <style scoped>
+.input-file {
+  display: none;
+  width: 100%;
+  height: 100%
+}
+
+/* Tạo một nút tùy chỉnh để kích hoạt chọn tệp */
+.custom-file-upload {
+  border: 1px solid #79bbff;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+  background-color: #409eff;
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Thêm transition */
+}
+
+.custom-file-upload:hover {
+  background-color: #79bbff;
+  border: 1px solid #c6e2ff;
+}
+
+.images {
+  display: block;
+}
+
+
 .demo-image__placeholder .block {
   position: relative;
   padding: 20px 0;

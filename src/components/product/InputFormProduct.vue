@@ -5,6 +5,7 @@
         <el-alert v-if="continueUpdate" title="Successful" type="success" show-icon style="max-width: 480px;"/>
         <el-alert v-if="isCreated" title="Successful" type="success" show-icon style="max-width: 480px"/>
         <GetCard :is-update="toComponentShowCard"
+                 :files="files"
                  :modified-by="form.modifiedBy"
                  :modified-date="form.modifiedDate"
                  :result="form" :imageLink="form.imageLink"
@@ -30,46 +31,25 @@
                 <el-input v-model.number="form.quantity" clearable/>
               </el-form-item>
               <el-form-item label="Add Image">
-                <div style="height: 150px; overflow: auto">
-                  <el-upload
-                      action="#"
-                      list-type="picture-card"
-                      :auto-upload="false"
-                      :on-change="handleChange"
-                      :on-remove="handleRemove"
-                  >
-                    <el-icon>
-                      <Plus/>
-                    </el-icon>
+                <!--                <div style="height: 150px; overflow: auto">-->
+                <div class="images">
+                  <label class="custom-file-upload">Click to upload
+                    <input type="file" multiple @change="onFileChange" class="input-file"/>
+                  </label>
 
-                    <template #file="{ file }">
-                      <div>
-                        <img class="el-upload-list__item-thumbnail" :src="file.url" alt=""/>
-                        <span class="el-upload-list__item-actions">
-                      <span
-                          class="el-upload-list__item-preview"
-                          @click="handlePictureCardPreview(file)"
-                      >
-                        <el-icon><zoom-in/></el-icon>
-                      </span>
-                      <span
-                          v-if="!disabled"
-                          class="el-upload-list__item-delete"
-                          @click="handleRemove(file, files)"
-                      >
-                        <el-icon><Delete/></el-icon>
-                      </span>
-                    </span>
-                      </div>
-                    </template>
-                  </el-upload>
-
-                  <el-dialog v-model="dialogVisible" style="width: 70%;">
-                    <img style="width: 100%; height: 100%; object-fit: cover;" :src="dialogImageUrl"
-                         alt="Preview Image"/>
-                  </el-dialog>
-                  <!--                      <input type="file" multiple @change="handleFileUpload">-->
+                  <el-scrollbar height="100px">
+                    <p v-for="(file, index) in files" :key="index" class="scrollbar-demo-item">{{ file.name }}
+                      <el-button class="remove-img" type="warning" size="small" @click="removeFile(index)"
+                                 style="margin-left: 10px;float: right;"
+                                 circle>
+                        <el-icon>
+                          <CircleCloseFilled/>
+                        </el-icon>
+                      </el-button>
+                    </p>
+                  </el-scrollbar>
                 </div>
+
               </el-form-item>
 
               <el-form-item label="Categories">
@@ -174,9 +154,9 @@ import {onMounted, reactive, ref, watch} from 'vue'
 import axios from "axios";
 import moment from 'moment';
 import GetCard from "@/components/product/common/ShowCard.vue";
-import type {FormInstance, FormRules, TabsPaneContext, UploadFile, UploadProps} from "element-plus";
+import type {FormInstance, FormRules, TabsPaneContext} from "element-plus";
 import {ElNotification} from "element-plus";
-import {Delete, Plus, ZoomIn} from '@element-plus/icons-vue'
+import {CircleCloseFilled} from "@element-plus/icons-vue";
 
 const props = defineProps({
   idProduct: {
@@ -203,7 +183,7 @@ const emits = defineEmits(['closeCreate', 'loadTable']);
 
 const URL_PRODUCT = "http://localhost:8080/product";
 const URL_CATEGORY = "http://localhost:8080/category";
-const URL_IMAGES = 'http://localhost:8080/api/images';
+const URL_IMAGES = 'http://localhost:8080/image-product/api/images';
 
 const isVisibleImage = ref(false);
 const inputLinkImage = ref('');
@@ -218,8 +198,8 @@ const selectedCategoryIds = ref<number[]>([]);
 const checkpointProduct = ref(false);
 const checkpointCategory = ref(false);
 const currentCategories = ref<Category[]>([]);
-const files = ref<UploadFile[]>([]);
-
+const files = ref<File[]>([]);
+const imageUrls = ref<string[]>([]);
 
 interface FormInp {
   id: number | null;
@@ -303,37 +283,39 @@ const rulesCategory = reactive<FormRules<Category>>({
     {required: true, message: 'Please input category code', trigger: 'blur'}
   ],
 });
-const dialogImageUrl = ref('')
-const dialogVisible = ref(false)
-const disabled = ref(false)
 
-// Method to handle file removal
-const handleRemove: UploadProps['onRemove'] = (uploadFile, uploadFiles) => {
-  console.log(uploadFile, uploadFiles)
-  console.log(files.value)
-}
-// Method to handle preview (optional)
-const handlePictureCardPreview = (file: UploadFile) => {
-  dialogImageUrl.value = file.url!;
-  dialogVisible.value = true;
+// Xử lý khi người dùng chọn tệp
+// Cập nhật mảng files khi người dùng chọn tệp
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files) {
+    // Chuyển đổi files thành mảng File[] và thêm vào files.value
+    files.value = [...files.value, ...Array.from(target.files)];
+  }
 };
-
-// Method to handle download (optional)
-const handleDownload = (file: UploadFile) => {
-  console.log(file);
-};
-
-// Method to add the file to the files array after it's selected
-const handleChange = (file: UploadFile, fileList: UploadFile[]) => {
-  files.value = fileList; // Synchronize the files array with the current fileList
-  console.log("1")
+// Xóa tệp khỏi danh sách
+const removeFile = (index: number) => {
+  files.value.splice(index, 1);
 };
 // Update
 const validateFormUpdate = () => {
   formRef.value?.validate(async (valid) => {
     if (valid) {
       if (selectedCategoryIds.value.length > 0 || form.categories.length > 0) {
-        await update();
+        const act = await update();
+        if (act) {
+          ElNotification({
+            title: 'Success',
+            message: 'Success update',
+            type: 'success',
+          })
+        } else {
+          ElNotification({
+            title: 'Error',
+            message: 'Unsuccess update',
+            type: 'error',
+          })
+        }
         emits('loadTable')
       } else {
         ElNotification({
@@ -375,12 +357,23 @@ const getDetailProduct = async (id: number | any) => {
       form.modifiedBy = data?.result?.modifiedBy;
       form.modifiedDate = formatDate(data?.result?.modifiedDate);
       form.categoryIds = data.result.categories?.map((c: any) => c?.id) ?? [];
-      form.imageProducts = data.result.imageProducts.map(img => ({
-        ...img,
-        imagePath: `${URL_IMAGES}?imageName=${encodeURIComponent(img.imageName)}` // Thay đổi đường dẫn đến URL API
-      }));
-      // Thêm id sẽ tự động thay đổi tới form (nhập vào)
       selectedCategoryIds.value = form.categoryIds;
+      form.imageProducts = data.result.imageProducts// Duyệt qua tất cả các ảnh trong imageProducts
+      for (const image of form.imageProducts) {
+        // Lấy ảnh từ API dưới dạng Blob
+        const response = await axios.get(`${URL_IMAGES}?imageName=${encodeURIComponent(image.imageName)}`, {
+          responseType: 'blob'
+        });
+
+        // Chuyển Blob thành File
+        const file = new File([response.data], image.imageName, {type: response.data.type});
+
+        // Thêm file vào mảng files
+        files.value.push(file);
+
+        // Tạo URL từ Blob
+        imageUrls.value.push(URL.createObjectURL(file));
+      }
     }
   } catch (error) {
     console.error("Failed to fetch students:", error);
@@ -403,10 +396,11 @@ const getAllCategory = async () => {
 }
 
 const update = async () => {
-  continueUpdate.value = false;
+  continueUpdate.value = false;  // Đặt giá trị false khi bắt đầu cập nhật
 
   const formData = new FormData();
 
+  // Tạo đối tượng body từ form
   const body = {
     id: form.id,
     name: form.name,
@@ -420,36 +414,38 @@ const update = async () => {
     categories: form.categories
   };
 
-  formData.append('product', JSON.stringify(body));
+  // Thêm body vào FormData
+  formData.append('product', new Blob([JSON.stringify(body)], {type: 'application/json'}));
 
-  // Append the files if any
+  // Thêm các tệp nếu có
   if (files.value.length > 0) {
-    files.value.forEach((file: UploadFile) => {
-      if (file.raw) {  // Assuming `file.raw` contains the actual File object
-        formData.append('files', file.raw as Blob);
-      }
+    files.value.forEach((file) => {
+      formData.append('files', file);
     });
   }
 
+  // Ghi log các phần tử của FormData để kiểm tra
   for (const pair of formData.entries()) {
     console.log(`${pair[0]}: ${pair[1]}`);
   }
 
   try {
+    // Gửi yêu cầu cập nhật sản phẩm
     const {data} = await axios.put(`${URL_PRODUCT}/img`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
 
-    if (data) {
+    if (data && data.result) {
+      // Cập nhật form với dữ liệu nhận được từ phản hồi
       Object.assign(form, {
         name: data.result.name,
         price: data.result.price,
         product_code: data.result.product_code,
         quantity: data.result.quantity,
         imageLink: data.result.imageLink,
-        state: data.result?.status,
+        state: data.result.status,
         desc: data.result.description,
         id: data.result.id,
         createdDate: formatDate(data.result.createdDate),
@@ -459,15 +455,15 @@ const update = async () => {
         categories: data.result.categories
       });
 
-      // Update currentCategories with new categories if they are not already present
-      form.categories.forEach(c => {
-        if (!currentCategories.value.find(element => element.id === c.id)) {
+      // Cập nhật currentCategories với các danh mục mới
+      form.categories.forEach((c) => {
+        if (!currentCategories.value.find((element) => element.id === c.id)) {
           currentCategories.value.push(c);
         }
       });
 
-      // Update selectedCategoryIds
-      selectedCategoryIds.value = form.categories?.map((c: any) => c?.id) ?? [];
+      // Cập nhật selectedCategoryIds
+      selectedCategoryIds.value = form.categories?.map((c: any) => c?.id) ?? []
 
       continueUpdate.value = true;
       setTimeout(() => {
@@ -476,8 +472,11 @@ const update = async () => {
     } else {
       console.warn('Error updating product or response structure is incorrect.');
     }
+
+    return form;
   } catch (error) {
     console.error('Error updating product:', error.message);
+    return null;
   }
 };
 
@@ -488,6 +487,11 @@ const validateFormCreate = () => {
     if (valid) {
       if (selectedCategoryIds.value.length > 0 || form.categories.length > 0) {
         await create()
+        ElNotification({
+          title: 'Success',
+          message: 'Success create',
+          type: 'success',
+        })
         emits('loadTable')
       } else {
         ElNotification({
@@ -503,8 +507,11 @@ const validateFormCreate = () => {
 }
 
 const create = async () => {
-  isCreated.value = false
+  isCreated.value = false;
+
   const formData = new FormData();
+
+  // Tạo đối tượng body từ form
   const body = {
     name: form.name,
     price: form.price,
@@ -515,56 +522,58 @@ const create = async () => {
     description: form.desc,
     categoryIds: form.categoryIds,
     categories: form.categories
-  }
+  };
 
-  formData.append('product', JSON.stringify(body));
+  // Thêm body vào FormData dưới dạng Blob để gửi dữ liệu JSON
+  formData.append('product', new Blob([JSON.stringify(body)], {type: 'application/json'}));
 
-  // Append the files if any
+  // Thêm các tệp nếu có
   if (files.value.length > 0) {
-    files.value.forEach((file: UploadFile) => {
-      if (file.raw) {  // Assuming `file.raw` contains the actual File object
-        formData.append('files', file.raw as Blob);
-      }
+    files.value.forEach((file) => {
+      formData.append('files', file);
     });
   }
 
+  // Ghi log các phần tử của FormData để kiểm tra
   for (const pair of formData.entries()) {
     console.log(`${pair[0]}: ${pair[1]}`);
   }
 
   try {
+    // Gửi yêu cầu tạo sản phẩm
     const {data} = await axios.post(`${URL_PRODUCT}/img`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
 
-    if (data) {
+    if (data && data.result) {
+      // Cập nhật form với dữ liệu nhận được từ phản hồi
       Object.assign(form, {
-        ...form, // Spread dữ liệu form hiện tại
         id: data.result.id,
-        createdDate: formatDate(data?.result?.createdDate),
-        createdBy: data?.result?.createdBy,
-        categories: data?.result.categories
-      })
-      // Kiểm tra nếu được tạo mới thì sẽ push và trong list currentCategories, để gọi lên các category được liên kết
-      form.categories.map((c) => {
+        createdDate: formatDate(data.result.createdDate),
+        createdBy: data.result.createdBy,
+        categories: data.result.categories
+      });
+
+      // Cập nhật currentCategories với các danh mục mới
+      form.categories.forEach((c) => {
         if (!currentCategories.value.find((element) => element.id === c.id)) {
-          currentCategories.value.push(c)
+          currentCategories.value.push(c);
         }
-      })
+      });
 
-      // Thêm id sẽ tự động thay đổi tới form (nhập vào)
-      selectedCategoryIds.value = form.categories?.map((c: any) => c?.id) ?? []
+      // Cập nhật selectedCategoryIds
+      selectedCategoryIds.value = form.categories.map((c) => c.id);
 
-      isCreated.value = true
+      isCreated.value = true;
     } else {
-      console.warn('Error creating product or response structure is incorrect.')
+      console.warn('Error creating product or response structure is incorrect.');
     }
   } catch (error) {
-    console.error('Error creating product:', error.message);
+    console.error('Error creating product:', error.response?.data?.message || error.message);
   }
-}
+};
 
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
@@ -636,6 +645,37 @@ watch(selectedCategoryIds, (newValue) => {
 
 
 <style scoped>
+.input-file {
+  display: none;
+  width: 100%;
+  height: 100%
+}
+
+/* Tạo một nút tùy chỉnh để kích hoạt chọn tệp */
+.custom-file-upload {
+  border: 1px solid #79bbff;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+  background-color: #409eff;
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Thêm transition */
+}
+
+.custom-file-upload:hover {
+  background-color: #79bbff;
+  border: 1px solid #c6e2ff;
+}
+
+.images {
+  display: block;
+}
+
+.remove-img:hover {
+
+}
+
 .demo-image__placeholder .block {
   position: relative;
   padding: 20px 0;

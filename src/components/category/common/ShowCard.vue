@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {Edit} from "@element-plus/icons-vue";
-import {ref} from "vue";
+import {computed, ref} from "vue";
 
 const checkLengthDesc = ref(true)
 
@@ -18,6 +18,7 @@ interface FormInp {
 const props = withDefaults(
     defineProps<{
       result: FormInp;
+      files: File[];
       imageLink: string;
       isUpdate?: boolean;
       modifiedBy?: string;
@@ -29,7 +30,10 @@ const props = withDefaults(
       modifiedDate: '',
     }
 );
-
+const imageUrls = computed(() => {
+  // Tạo một mảng tạm để lưu các URL ảnh
+  return props.files.map(file => URL.createObjectURL(file));
+});
 const changeLengthDesc = () => {
   checkLengthDesc.value = !checkLengthDesc.value
 }
@@ -37,8 +41,12 @@ const changeLengthDesc = () => {
 
 <template>
   <el-card style="max-width: 480px;">
-    <el-image class="img-card" :src="imageLink"/>
-    <span @click="$emit('visibleImage')" class="demonstration">
+    <div style="max-width: 30vw; max-height:33vh; overflow: auto">
+      <!--      <el-image class="img-card" :src="imageLink"/>-->
+      <el-image v-for="(url, index) in imageUrls" :key="index" :src="url"
+                style="max-width: 25vw"/>
+    </div>
+    <span @click="$emit('visibleImage')" class="demonstration" style="margin-top: 20px">
           <el-icon>
             <Edit/>
           </el-icon>

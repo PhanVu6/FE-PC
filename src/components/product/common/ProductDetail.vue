@@ -33,7 +33,7 @@ interface Category {
 interface FormInp {
   id: number | null;
   name: string;
-  price: number;
+  price: string;
   product_code: string;
   quantity: number;
   imageLink: string;
@@ -54,7 +54,7 @@ const infor = reactive<FormInp>({
   id: null,
   name: '',
   description: '',
-  price: 0,
+  price: '',
   product_code: '',
   quantity: 0,
   imageLink: '',
@@ -75,7 +75,7 @@ const getDetailProduct = async (id: number) => {
       infor.id = data?.result?.id
       infor.name = data?.result?.name
       infor.description = data?.result?.description
-      infor.price = Number(formatPrice(data?.result?.price))
+      infor.price = formatPrice(data?.result?.price)
       infor.product_code = data?.result?.product_code
       infor.quantity = data?.result?.quantity
       infor.imageLink = data?.result?.imageLink
